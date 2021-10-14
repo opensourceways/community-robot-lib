@@ -444,6 +444,28 @@ func (c *client) GetIssue(org, repo, number string) (sdk.Issue, error) {
 	return issue, formatErr(err, "get issue")
 }
 
+//GetRepoAllBranch get repository all branch
+func (c *client) GetRepoAllBranch(org, repo string) ([]sdk.Branch, error) {
+	branches, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoBranches(context.Background(), org, repo,
+		nil)
+	return branches, formatErr(err, "get repo all branch")
+}
+
+//GetPathContent Get the content under a specific repository
+func (c *client) GetPathContent(org, repo, path, ref string) (sdk.Content, error) {
+	op := sdk.GetV5ReposOwnerRepoContentsPathOpts{}
+	op.Ref = optional.NewString(ref)
+	content, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoContentsPath(context.Background(), org, repo, path, &op)
+	return content, formatErr(err, "get path content")
+}
+
+//GetDirectoryTree Get the directory tree under a specific repository branch or commit sha
+func (c *client) GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error) {
+	op := sdk.GetV5ReposOwnerRepoGitTreesShaOpts{Recursive: optional.NewInt32(recursive)}
+	trees, _, err := c.ac.GitDataApi.GetV5ReposOwnerRepoGitTreesSha(context.Background(), org, repo, sha, &op)
+	return trees, formatErr(err, "get directory tree")
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err

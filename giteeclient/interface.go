@@ -53,6 +53,10 @@ type Client interface {
 	GetIssue(org, repo, number string) (sdk.Issue, error)
 
 	ListPROperationLogs(org, repo string, number int32) ([]sdk.OperateLog, error)
+
+	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
+	GetPathContent(org, repo, path, ref string) (sdk.Content, error)
+	GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error)
 }
 
 type ListPullRequestOpt struct {
