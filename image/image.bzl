@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//container:bundle.bzl", "container_bundle")
 load("@io_bazel_rules_docker//contrib:push-all.bzl", "container_push")
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 
-def containers():
+def operating_system():
     container_pull(
             name = "alpine_linux_amd64",
             registry = "index.docker.io",
@@ -13,20 +13,30 @@ def containers():
             tag = "3.14.2",
     )
 
+def build_plugin_image(name, plugin, **kwargs):
+    build_image(
+        name = name,
+        base = "@alpine_linux_amd64//image",
+        repository = plugin,
+    )
+
 # build_image is a macro for creating :app and :image targets
 def build_image(
-        name,  # use "image"
-        base = None,
-        stamp = True,  # stamp by default, but allow overrides
+        name,
         app_name = "app",
+        base = None,
+        goarch = "amd64",
+        goos = "linux",
+        stamp = True,
         component = [":go_default_library"],
         **kwargs):
+
     go_image(
         name = app_name,
         base = base,
         embed = component,
-        goarch = "amd64",
-        goos = "linux",
+        goarch = goarch,
+        goos = goos,
     )
 
     container_image(
@@ -37,7 +47,8 @@ def build_image(
         **kwargs
     )
 
-# push_image creates a bundle of container images, and a target to push them.
+
+# push_image creates a bundle of container images and push them.
 def push_image(
         name,
         bundle_name = "bundle",
@@ -56,11 +67,6 @@ def push_image(
 # Concretely,image_tags("//checkpr:image") will output the following:
 # {
 #   "swr.ap-southeast-1.myhuaweicloud.com/opensourceway/robot/checkpr:20210203-deadbeef": //checkpr:image
-#   "swr.ap-southeast-1.myhuaweicloud.com//opensourceway/robot/checkpr:latest": //checkpr:image
 # }
 def image_tags(target):
-    docker_name = "{STABLE_REPO}/{DOCKER_NAME}"
-    outs = {}
-    outs["%s:{DOCKER_TAG}" % docker_name] = target
-    outs["%s:latest" % docker_name] = target
-    return outs
+    return {"{IMAGE_REGISTRY}/{IMAGE_REPO}:{IMAGE_TAG}": target}
