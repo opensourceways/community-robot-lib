@@ -34,11 +34,16 @@ build(){
         return 1
     fi
 
+    local path=$1
+
+    if [ ! -d $path ]; then
+        echo "invalid path: $path"
+        return 1
+    fi
+
     update_repo
 
     tips "build lib"
-
-    local path=$1
 
     $bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 //$path:go_default_library
 }

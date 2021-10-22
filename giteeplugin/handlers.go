@@ -1,4 +1,4 @@
-package plugin
+package giteeplugin
 
 import (
 	"gitee.com/openeuler/go-gitee/gitee"

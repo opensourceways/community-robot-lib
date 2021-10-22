@@ -1,4 +1,4 @@
-package plugin
+package giteeplugin
 
 import (
 	"io/ioutil"
