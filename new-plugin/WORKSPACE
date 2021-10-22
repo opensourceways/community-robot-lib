@@ -33,7 +33,7 @@ git_repository(
     branch = "master"
 )
 
-load("@github_opensourceways_community_robot_lib//image:image.bzl", "operating_system")
+load("@github_opensourceways_community_robot_lib//:image.bzl", "operating_system")
 
 operating_system()
 

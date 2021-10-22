@@ -1,4 +1,4 @@
-load("@github_opensourceways_community_robot_lib//image:image.bzl", "build_plugin_image", "push_image", "image_tags")
+load("@github_opensourceways_community_robot_lib//:image.bzl", "build_plugin_image", "push_image", "image_tags")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix {PLUGIN_REPO}
