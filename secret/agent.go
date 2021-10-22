@@ -24,8 +24,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/opensourceways/robot-gitee-plugin-lib/logrusutil"
-	"github.com/opensourceways/robot-gitee-plugin-lib/utils"
+	"github.com/opensourceways/community-robot-lib/logrusutil"
+	"github.com/opensourceways/community-robot-lib/utils"
 )
 
 // Agent watches a path and automatically loads the secrets stored.

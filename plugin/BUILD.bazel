@@ -7,7 +7,7 @@ go_library(
         "handlers.go",
         "plugin.go",
     ],
-    importpath = "github.com/opensourceways/robot-gitee-plugin-lib/plugin",
+    importpath = "github.com/opensourceways/community-robot-lib/plugin",
     visibility = ["//visibility:public"],
     deps = [
         "//config:go_default_library",

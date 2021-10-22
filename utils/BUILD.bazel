@@ -6,6 +6,6 @@ go_library(
         "multi_error.go",
         "timer.go",
     ],
-    importpath = "github.com/opensourceways/robot-gitee-plugin-lib/utils",
+    importpath = "github.com/opensourceways/community-robot-lib/utils",
     visibility = ["//visibility:public"],
 )

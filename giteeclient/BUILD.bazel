@@ -11,7 +11,7 @@ go_library(
         "util.go",
         "webhooks.go",
     ],
-    importpath = "github.com/opensourceways/robot-gitee-plugin-lib/giteeclient",
+    importpath = "github.com/opensourceways/community-robot-lib/giteeclient",
     visibility = ["//visibility:public"],
     deps = [
         "@com_gitee_openeuler_go_gitee//gitee:go_default_library",

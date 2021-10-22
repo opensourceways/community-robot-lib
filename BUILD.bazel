@@ -1,4 +1,4 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
-# gazelle:prefix github.com/opensourceways/robot-gitee-plugin-lib
+# gazelle:prefix github.com/opensourceways/community-robot-lib
 gazelle(name = "gazelle")

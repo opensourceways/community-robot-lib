@@ -6,7 +6,7 @@ go_library(
         "config_agent.go",
         "plugin_for_repo.go",
     ],
-    importpath = "github.com/opensourceways/robot-gitee-plugin-lib/config",
+    importpath = "github.com/opensourceways/community-robot-lib/config",
     visibility = ["//visibility:public"],
     deps = [
         "//utils:go_default_library",

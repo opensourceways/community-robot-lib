@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 
-	"github.com/opensourceways/robot-gitee-plugin-lib/utils"
+	"github.com/opensourceways/community-robot-lib/utils"
 )
 
 type PluginConfig interface {

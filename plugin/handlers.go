@@ -4,7 +4,7 @@ import (
 	"gitee.com/openeuler/go-gitee/gitee"
 	"github.com/sirupsen/logrus"
 
-	"github.com/opensourceways/robot-gitee-plugin-lib/config"
+	"github.com/opensourceways/community-robot-lib/config"
 )
 
 // IssueHandler defines the function contract for a gitee.IssueEvent handler.

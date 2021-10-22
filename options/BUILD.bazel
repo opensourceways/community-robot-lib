@@ -6,6 +6,6 @@ go_library(
         "gitee.go",
         "plugin.go",
     ],
-    importpath = "github.com/opensourceways/robot-gitee-plugin-lib/options",
+    importpath = "github.com/opensourceways/community-robot-lib/options",
     visibility = ["//visibility:public"],
 )

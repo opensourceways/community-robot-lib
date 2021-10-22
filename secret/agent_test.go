@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/opensourceways/robot-gitee-plugin-lib/logrusutil"
+	"github.com/opensourceways/community-robot-lib/logrusutil"
 )
 
 func TestCensoringFormatter(t *testing.T) {
