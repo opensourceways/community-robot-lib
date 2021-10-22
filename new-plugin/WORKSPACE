@@ -30,7 +30,8 @@ _go_repositories()
 git_repository(
     name = "github_opensourceways_community_robot_lib",
     remote = "git@github.com:opensourceways/community-robot-lib.git",
-    branch = "master"
+    commit = "a713469ab433890353db7fce3f9b8f7887b729a9",
+    shallow_since = "1634896045 +0800",
 )
 
 load("@github_opensourceways_community_robot_lib//:image.bzl", "operating_system")
