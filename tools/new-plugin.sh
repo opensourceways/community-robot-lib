@@ -25,6 +25,10 @@ build(){
 
     rm -fr community-robot-lib 
 
+    cp -r giteeplugin/. .
+
+    rm -fr giteeplugin
+
     repo_path=${repo_path//\//\\\/}
 
     sed -i -e "s/{PLUGIN_REPO}/${repo_path}/" ./BUILD.bazel

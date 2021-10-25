@@ -22,7 +22,6 @@ type HandlerRegitster interface {
 type Plugin interface {
 	NewPluginConfig() config.PluginConfig
 	RegisterEventHandler(HandlerRegitster)
-	Exit()
 }
 
 func Run(p Plugin, o options.PluginOptions) {
@@ -41,7 +40,6 @@ func Run(p Plugin, o options.PluginOptions) {
 	interrupts.OnInterrupt(func() {
 		agent.Stop()
 		d.Wait()
-		p.Exit()
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
