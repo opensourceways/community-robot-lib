@@ -4,10 +4,10 @@ metadata:
   name: {{BOT-NAME}}
 spec:
   ports:
-    - name: httpport
-      port: {{PORT}}
-      protocol: TCP
-      targetPort: {{PORT}}
+  - name: httpport
+    port: {{PORT}}
+    protocol: TCP
+    targetPort: {{PORT}}
   selector:
     component: {{BOT-NAME}}
   type: ClusterIP
