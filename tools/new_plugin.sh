@@ -41,7 +41,8 @@ build(){
 
 cmd_help(){
 cat << EOF
-usage: $me absolute-dir-of-repo import-path-of-repo. for example: $me /test github.com/exmaple/test 
+usage: $me dir-of-repo import-path-of-repo.
+for example: $me ./test github.com/exmaple/test 
 EOF
 }
 
