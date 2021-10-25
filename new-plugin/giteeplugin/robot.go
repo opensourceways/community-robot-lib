@@ -27,7 +27,7 @@ func (bot *robot) NewPluginConfig() libconfig.PluginConfig {
 	return &configuration{}
 }
 
-func (bot *robot) botConfig(cfg libconfig.PluginConfig) (*configuration, error) {
+func (bot *robot) getConfig(cfg libconfig.PluginConfig) (*configuration, error) {
 	if c, ok := cfg.(*configuration); ok {
 		return c, nil
 	}
