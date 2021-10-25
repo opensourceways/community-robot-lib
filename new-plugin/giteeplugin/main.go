@@ -50,9 +50,7 @@ func main() {
 
 	c := giteeclient.NewClient(secretAgent.GetTokenGenerator(o.gitee.TokenPath))
 
-	var p libplugin.Plugin
-
-	// TODO: new a libplugin.Plugin
+	p := newRobot(c)
 
 	libplugin.Run(p, o.plugin)
 
