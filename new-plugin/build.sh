@@ -20,7 +20,7 @@ update_repo(){
     if [ -f go.mod ]; then
         go mod tidy
     else
-        go mod init
+        go mod init {PLUGIN_REPO}
         go mod tidy
     fi
 

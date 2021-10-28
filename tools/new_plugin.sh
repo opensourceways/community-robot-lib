@@ -34,6 +34,8 @@ build(){
     sed -i -e "s/{PLUGIN_REPO}/${repo_path}/" ./BUILD.bazel
     sed -i -e "s/{PLUGIN_NAME}/${repo_name}/" ./BUILD.bazel
 
+    sed -i -e "s/{PLUGIN_REPO}/${repo_path}/" ./build.sh
+
     git init .
     git add .
     git commit -m "init repo"
