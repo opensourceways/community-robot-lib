@@ -7,9 +7,9 @@ set -o pipefail
 work_dir=$(pwd)
 cd $(dirname $0)
 
+branch=$(git symbolic-ref --short HEAD)
 commit_id=$(git describe --tags --always --dirty)
-build_date=$(date -u '+%Y%m%d')
-image_tag="v${build_date}-${commit_id}"
+image_tag="${branch}-${commit_id}"
 repository=$(pwd | xargs dirname | xargs basename)
 
 image_registry=${IMAGE_REGISTRY_OVERRIDE:-swr.cn-north-4.myhuaweicloud.com}
