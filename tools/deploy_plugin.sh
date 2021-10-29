@@ -5,11 +5,22 @@ set -euo pipefail
 cd $(dirname $0)
 me=$(basename $0)
 pn=$#
+all_param=( $@ )
 
-ph_bot_name="{{BOT-NAME}}"
-ph_platform="{{PLATFORM}}"
-ph_image="{{IMAGE}}"
-ph_port="{{PORT}}"
+upstream_org=opensourceways
+upstream_repo=infra-mindspore
+upstream=https://github.com/${upstream_org}/${upstream_repo}.git
+
+ph_component="{{COMPONENT}}"
+
+fetch_parameter() {
+    local index=$1
+    if [ $pn -lt $index ]; then
+        echo ""
+    else
+        echo "${all_param[@]:${index}-1}"
+    fi
+}
 
 replace() {
     local from=$1
@@ -17,6 +28,14 @@ replace() {
     local file=$3
 
     sed -i -e "s/${from}/${to}/g" $file
+}
+
+insertBefore(){
+    local match=$1
+    local line=$2
+    local file=$3
+
+    sed -i "/${match}/i $line" $file
 }
 
 underscore_to_hyphen(){
@@ -29,76 +48,74 @@ convert_backslash(){
     echo ${s//\//\\\/}
 }
 
-gen_deployment() {
-    local bot_name=$1
-    local platform=$2
-    local image=$3
-    local port=$4
-
-    bot_name=$(underscore_to_hyphen $bot_name)
-    platform=$(underscore_to_hyphen $platform)
-    image=$(convert_backslash $image)
-
-    local file=deployment.yaml
-
-    replace "$ph_bot_name" "$bot_name" $file
-    replace "$ph_platform" "$platform" $file
-    replace "$ph_image" "$image" $file
-    replace "$ph_port" "$port" $file
+timestamp() {
+    echo $(date +%s)
 }
 
+clone_infra_mindspore() {
+    local git_user=$1
+    local git_password=$2
+    local git_user_email=$3
 
-gen_service() {
-    local bot_name=$1
-    local port=$2
+    local path=$(pwd)
+    local repo=${upstream_repo}
 
-    bot_name=$(underscore_to_hyphen $bot_name)
+    test -d $repo && rm -fr $repo
 
-    local file=service.yaml
+    git clone https://${git_user}:${git_password}@github.com/${git_user}/${repo}.git
+    cd $repo
 
-    replace "$ph_bot_name" "$bot_name" $file
-    replace "$ph_port" "$port" $file
+    git config user.name $git_user
+    git config user.email $git_user_email
+
+    git remote add upstream ${upstream}
+    git fetch upstream
+    git rebase upstream/master
+
+    cd $path
 }
 
-gen_app_config() {
-    local bot_name=$1
-    local platform=$2
-
-    bot_name=$(underscore_to_hyphen $bot_name)
-    platform=$(underscore_to_hyphen $platform)
-
-    local file=app_config.yaml
-
-    replace "$ph_bot_name" "$bot_name" $file
-    replace "$ph_platform" "$platform" $file
+reset_image(){
+    local image=$1
+    kustomize edit set image swr.cn-north-4.myhuaweicloud.com/opensourceway/robot/robot-gitee=$image
 }
 
-cmd_help(){
-cat << EOF
-usage: $me dir-of-repo platform bot_name port image.
-for example: $me ./checkpr gitee checkpr 8888 swr.ap-southeast-1.myhuaweicloud.com/opensourceway/robot/robot-gitee-checkpr:bc480df
+register_bot() {
+    local bot=$1
+    local events=$2
+    local file=$3
+
+cat << EOF >> $file
+      - name: ${bot}
+        endpoint: http://service-${bot}.robot-gitee.svc.cluster.local:8888/gitee-hook
+        events:
 EOF
+
+    events=${events//,/\\\n}
+    events=$(echo -e $events)
+    for i in ${events[@]}; do
+	    echo "        - \"$i\"" >> $file
+    done
 }
 
-deploy(){
-    if [ $pn -lt 5 ]; then
-        cmd_help
-        exit 1
-    fi
+gen_deploy_yaml(){
+    local bot=$1
+    local image=$2
+    local events=$3
 
-    local repo_dir=$1
-    local platform=$2
-    local bot_name=$3
-    local port=$4
-    local image=$5
+    local path=$(pwd)
 
-    if [ -d $repo_dir ]; then
-        echo "$repo_dir is exist"
+    cd applications/robot-gitee
+
+    bot=$(underscore_to_hyphen $bot)
+
+    if [ -d $bot ]; then
+        echo "error: $bot is exist"
         return 1
     fi
 
-    mkdir $repo_dir
-    cd $repo_dir
+    mkdir $bot
+    cd $bot
 
     git clone https://github.com/opensourceways/community-robot-lib.git
 
@@ -106,11 +123,158 @@ deploy(){
 
     rm -fr community-robot-lib
 
-    gen_service $bot_name $port
+    # must mark ./* in ""
+    replace $ph_component $bot "./*"
 
-    gen_deployment $bot_name $platform $image $port
+    reset_image $image
 
-    gen_app_config $bot_name $platform
+    insertBefore "^commonLabels:" "- $bot"  ../kustomization.yaml
+
+    register_bot $bot "$events" ../access/configmap.yaml
+
+    cd $path
 }
 
-deploy $@
+update_image() {
+    local bot=$1
+    local image=$2
+    local path=$(pwd)
+
+    cd applications/robot-gitee
+
+    bot=$(underscore_to_hyphen $bot)
+
+    if [ ! -d $bot ]; then
+        echo "error: $bot is not exist"
+        return 1
+    fi
+
+    cd $bot
+
+    reset_image $image
+
+    cd $path
+}
+
+submit_pr() {
+    local bot=$1
+    local git_user=$2
+    local git_password=$3
+    local commit_msg=$4
+
+    local branch=${bot}_$(timestamp)
+    git checkout -b $branch
+
+    git add .
+    git commit -am "$commit_msg"
+
+    git push -u origin $branch
+
+    title=$commit_msg
+
+    curl \
+      -u ${git_user}:${git_password} \
+      -X POST \
+      -H "Accept: application/vnd.github.v3+json" \
+      https://api.github.com/repos/${upstream_org}/${upstream_repo}/pulls \
+      -d "{\"title\":\"${title}\",\"head\":\"${git_user}:${branch}\",\"base\":\"master\",\"prune_source_branch\":\"true\"}"
+}
+
+init() {
+    if [ $# -lt 6 ]; then
+        cmd_help "init"
+        exit 1
+    fi
+
+    local bot=$1
+    local image=$2
+    local events=$3
+    local git_user=$4
+    local git_user_password=$5
+    local git_user_email=$6
+
+    clone_infra_mindspore $git_user $git_user_password $git_user_email
+
+    cd ${upstream_repo}
+
+    gen_deploy_yaml $bot $image "$events"
+
+    submit_pr $bot $git_user $git_user_password "add deployment for bot $bot"
+}
+
+update_bot_image() {
+    if [ $# -lt 5 ]; then
+        cmd_help "update_bot_image"
+        exit 1
+    fi
+
+    local bot=$1
+    local image=$2
+    local git_user=$3
+    local git_user_password=$4
+    local git_user_email=$5
+
+    clone_infra_mindspore $git_user $git_user_password $git_user_email
+
+    cd ${upstream_repo}
+
+    update_image $bot $image
+
+    submit_pr $bot $git_user $git_user_password "update image for bot $bot"
+}
+
+cmd_help(){
+    if [ $# -eq 0 ]; then
+cat << EOF
+This deploy tool depends on the structure of ${upstream}.
+
+usage: $me cmd
+supported cmd:
+    init: initialize a deployment for a bot.
+    update_bot_image: update the image of bot.
+    help: show the usage for each commands.
+EOF
+        return 0
+    fi
+
+    local cmd=$1
+    case $cmd in
+        "init")
+            echo "$me init bot-name image events git-user git-user-password git-user-email"
+            ;;
+        "update_bot_image")
+            echo "$me update_bot_image bot-name image git-user git-user-password git-user-email"
+            ;;
+        "help")
+            echo "$me help other-child-cmd"
+            ;;
+        *)
+            echo "error: unknown child cmd: $cmd"
+            ;;
+     esac
+}
+
+
+if [ $pn -lt 1 ]; then
+    cmd_help
+    exit 1
+fi
+
+cmd=$1
+case $cmd in
+    "init")
+        init $(fetch_parameter 2)
+        ;;
+    "update_bot_image")
+        update_bot_image $(fetch_parameter 2)
+        ;;
+    "--help")
+        cmd_help
+        ;;
+    "help")
+        cmd_help $(fetch_parameter 2)
+        ;;
+    *)
+        echo "error: unknown cmd: $cmd"
+        ;;
+esac
