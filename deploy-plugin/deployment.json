@@ -1,0 +1,17 @@
+[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/name",
+    "value": "{{COMPONENT}}"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/volumes/0/secret/secretName",
+    "value": "secret-{{COMPONENT}}"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/volumes/1/configMap/name",
+    "value": "configmap-{{COMPONENT}}"
+  }
+]

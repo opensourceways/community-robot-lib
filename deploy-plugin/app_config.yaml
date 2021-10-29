@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: robot-{{PLATFORM}}-{{BOT-NAME}}
-data:
-  config.yaml: |
-  #fill in the config items
