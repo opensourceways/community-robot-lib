@@ -5,7 +5,7 @@ set -euo pipefail
 cd $(dirname $0)
 me=$(basename $0)
 pn=$#
-all_param=( $@ )
+all_param=${@-""}
 
 upstream_org=opensourceways
 upstream_repo=infra-mindspore
@@ -18,7 +18,8 @@ fetch_parameter() {
     if [ $pn -lt $index ]; then
         echo ""
     else
-        echo "${all_param[@]:${index}-1}"
+        local all=( $all_param )
+        echo "${all[@]:${index}-1}"
     fi
 }
 
