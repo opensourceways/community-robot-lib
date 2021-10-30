@@ -91,11 +91,12 @@ cat << EOF >> $file
         events:
 EOF
 
-    events=${events//,/\\\n}
-    events=$(echo -e $events)
-    for i in ${events[@]}; do
-	    echo "        - \"$i\"" >> $file
-    done
+    local tmp="${file}_$(timestamp)"
+    events=${events//,/\"\\\n\"}
+    echo -e "\"$events\"" > $tmp
+    sed -i -e 's/^/        - /' $tmp
+    cat $tmp >> $file
+    rm $tmp
 }
 
 gen_deploy_yaml(){
@@ -255,18 +256,26 @@ EOF
 }
 
 
-if [ $pn -lt 1 ]; then
-    cmd_help
-    exit 1
-fi
+check_param() {
+    local n=$1
+
+    if [ $pn -lt $n ]; then
+        cmd_help $all_param
+        return 1
+    fi
+}
+
+check_param 1
 
 cmd=$1
 case $cmd in
     "init")
-        init $(fetch_parameter 2)
+        check_param 7
+        init "$2" "$3" "$4" "$5" "$6" "$7"
         ;;
     "update_bot_image")
-        update_bot_image $(fetch_parameter 2)
+        check_param 6
+        update_bot_image "$2" "$3" "$4" "$5" "$6"
         ;;
     "--help")
         cmd_help
