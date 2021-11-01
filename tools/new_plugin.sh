@@ -82,6 +82,7 @@ build(){
     local repo_path=$2
 
     check_robot_name $(basename $repo_path)
+    repo_path=$(dirname $repo_path)/$repo_name
 
     if [ -d $repo_dir ]; then
         echo "$repo_dir is exist"
@@ -101,6 +102,9 @@ build(){
 
     rm -fr giteeplugin
 
+    git init .
+    git remote add origin https://$repo_path
+
     repo_path=${repo_path//\//\\\/}
 
     sed -i -e "s/{PLUGIN_REPO}/${repo_path}/" ./BUILD.bazel
@@ -108,7 +112,6 @@ build(){
 
     sed -i -e "s/{PLUGIN_REPO}/${repo_path}/" ./build.sh
 
-    git init .
     git add .
     git commit -m "init repo"
 }
