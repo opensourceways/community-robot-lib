@@ -13,7 +13,7 @@ branch=${BRANCH_OVERRIDE:-$branch}
 commit_id=$(git describe --tags --always --dirty)
 commit_id=${COMMIT_ID_OVERRIDE:-$commit_id}
 
-repository=$(git remote -v | tail -1 | awk -F '/' '{print $NF}' | awk -F '. ' '{print $1}')
+repository=$(git remote -v | tail -1 | awk -F '/' '{print $NF}' | awk -F ' ' '{print $1}' | awk -F '.' '{print $1}')
 if [ -z "$repository" ]; then
     repository=$(pwd | xargs dirname | xargs basename)
 fi
