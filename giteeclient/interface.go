@@ -57,6 +57,8 @@ type Client interface {
 	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
 	GetPathContent(org, repo, path, ref string) (sdk.Content, error)
 	GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error)
+
+	GetBot() (sdk.User, error)
 }
 
 type ListPullRequestOpt struct {
