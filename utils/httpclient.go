@@ -14,8 +14,8 @@ type HttpClient struct {
 	MaxRetries int
 }
 
-func (fc *HttpClient) ForwardTo(req *http.Request, jsonResp interface{}) error {
-	resp, err := fc.do(req)
+func (hc *HttpClient) ForwardTo(req *http.Request, jsonResp interface{}) error {
+	resp, err := hc.do(req)
 	if err != nil || resp == nil {
 		return err
 	}
@@ -36,19 +36,19 @@ func (fc *HttpClient) ForwardTo(req *http.Request, jsonResp interface{}) error {
 	return nil
 }
 
-func (fc *HttpClient) do(req *http.Request) (resp *http.Response, err error) {
-	if resp, err = fc.cli.Do(req); err == nil {
+func (hc *HttpClient) do(req *http.Request) (resp *http.Response, err error) {
+	if resp, err = hc.cli.Do(req); err == nil {
 		return
 	}
 
-	maxRetries := fc.MaxRetries
+	maxRetries := hc.MaxRetries
 	backoff := 10 * time.Millisecond
 
 	for retries := 1; retries < maxRetries; retries++ {
 		time.Sleep(backoff)
 		backoff *= 2
 
-		if resp, err = fc.cli.Do(req); err == nil {
+		if resp, err = hc.cli.Do(req); err == nil {
 			break
 		}
 	}
