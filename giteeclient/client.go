@@ -469,11 +469,7 @@ func (c *client) GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.T
 // GetUserPermissionsOfRepo get user permissions in the repository
 func (c *client) GetUserPermissionsOfRepo(org, repo, login string) (sdk.ProjectMemberPermission, error) {
 	permission, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoCollaboratorsUsernamePermission(
-		context.Background(),
-		org,
-		repo,
-		login,
-		nil,
+		context.Background(), org, repo, login, nil,
 	)
 
 	return permission, formatErr(err, "get user permissions")
