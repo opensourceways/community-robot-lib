@@ -59,6 +59,7 @@ type Client interface {
 	GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error)
 
 	GetBot() (sdk.User, error)
+	GetUserPermissionsOfRepo(org, repo, login string) (sdk.ProjectMemberPermission, error)
 }
 
 type ListPullRequestOpt struct {
