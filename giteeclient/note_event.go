@@ -1,6 +1,9 @@
 package giteeclient
 
-import sdk "gitee.com/openeuler/go-gitee/gitee"
+import (
+	sdk "gitee.com/openeuler/go-gitee/gitee"
+	"k8s.io/apimachinery/pkg/util/sets"
+)
 
 const (
 	//StatusOpen gitee issue or pr status is open
@@ -71,6 +74,11 @@ func (ne IssueNoteEvent) GetIssueNumber() string {
 	return ne.Issue.Number
 }
 
+//GetIssueLabels returns the labels of the issue
+func (ne IssueNoteEvent) GetIssueLabels() sets.String {
+	return getLabelFromEvent(ne.Issue.Labels)
+}
+
 //PRNoteEvent a wrapper for the event of the comment pullrequest
 //to provide methods for obtaining pullrequest related information
 type PRNoteEvent struct {
@@ -92,6 +100,7 @@ func (ne PRNoteEvent) IsPROpen() bool {
 	return ne.PullRequest.State == StatusOpen
 }
 
+// GetPRInfo gen PRInfo instance
 func (ne PRNoteEvent) GetPRInfo() PRInfo {
 	org, repo := ne.GetOrgRep()
 	pr := ne.PullRequest
@@ -102,8 +111,13 @@ func (ne PRNoteEvent) GetPRInfo() PRInfo {
 		HeadSHA: pr.Head.Sha,
 		Author:  ne.GetPRAuthor(),
 		Number:  ne.GetPRNumber(),
-		Labels:  getLabelFromEvent(pr.Labels),
+		Labels:  ne.GetPRLabels(),
 	}
+}
+
+// GetPRLabels returns the labels of the pr
+func (ne PRNoteEvent) GetPRLabels() sets.String {
+	return getLabelFromEvent(ne.PullRequest.Labels)
 }
 
 //NewNoteEventWrapper create a wrapper for comment events
