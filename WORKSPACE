@@ -65,8 +65,8 @@ go_repository(
 go_repository(
     name = "com_gitee_openeuler_go_gitee",
     importpath = "gitee.com/openeuler/go-gitee",
-    sum = "h1:Eix1vh/yfc9WpHNKAZrKmdV4oi83/hkKqAfTAdV09VE=",
-    version = "v0.0.0-20210824105152-bda4a7aaee37",
+    sum = "h1:pzpuPpIWS0TkOBxl6xhVdZAY9xR6lIpUb0p5XTXb29A=",
+    version = "v0.0.0-20211112104044-946db51b5fad",
 )
 
 go_repository(
