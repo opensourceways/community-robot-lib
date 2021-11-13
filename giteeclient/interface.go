@@ -42,6 +42,7 @@ type Client interface {
 	GetRepoLabels(owner, repo string) ([]sdk.Label, error)
 
 	RemoveIssueLabel(org, repo, number, label string) error
+	RemoveIssueLabels(org, repo, number, label []string) error
 	AddIssueLabel(org, repo, number, label string) error
 	AddMultiIssueLabel(org, repo, number string, label []string) error
 

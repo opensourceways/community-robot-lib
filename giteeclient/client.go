@@ -411,6 +411,10 @@ func (c *client) RemoveIssueLabel(org, repo, number, label string) error {
 	return formatErr(err, "rm issue label")
 }
 
+func (c *client) RemoveIssueLabels(org, repo, number string, label []string) error {
+	return c.RemoveIssueLabel(org, repo, number, strings.Join(label, ","))
+}
+
 func (c *client) ReplacePRAllLabels(owner, repo string, number int32, labels []string) error {
 	opt := sdk.PullRequestLabelPostParam{Body: labels}
 	_, _, err := c.ac.PullRequestsApi.PutV5ReposOwnerRepoPullsNumberLabels(context.Background(), owner, repo, number, opt)
