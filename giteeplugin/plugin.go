@@ -27,6 +27,7 @@ type Plugin interface {
 func Run(p Plugin, o options.PluginOptions) {
 	agent := config.NewConfigAgent(p.NewPluginConfig)
 	if err := agent.Start(o.PluginConfig); err != nil {
+		logrus.WithError(err).Errorf("start config:%s", o.PluginConfig)
 		return
 	}
 
