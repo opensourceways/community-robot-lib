@@ -479,11 +479,14 @@ func (c *client) GetUserPermissionsOfRepo(org, repo, login string) (sdk.ProjectM
 	return permission, formatErr(err, "get user permissions")
 }
 
-// AddRepoLabel create a random color label for the repository
-func (c *client) AddRepoLabel(org, repo, label string) error {
+// CreateRepoLabel create label for the repository
+func (c *client) CreateRepoLabel(org, repo, label, color string) error {
+	if color == "" {
+		color = genrateRGBColor()
+	}
 	param := sdk.LabelPostParam{
 		Name:  label,
-		Color: genrateLabelRandomColor(),
+		Color: color,
 	}
 
 	_, _, err := c.ac.LabelsApi.PostV5ReposOwnerRepoLabels(context.Background(), org, repo, param)

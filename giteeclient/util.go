@@ -111,7 +111,7 @@ func GetPullRequestAction(e *sdk.PullRequestEvent) string {
 	return ""
 }
 
-func genrateLabelRandomColor() string {
-	cRand := rand.New(rand.NewSource(time.Now().Unix()))
-	return fmt.Sprintf("%02x%02x%02x", cRand.Intn(255), cRand.Intn(255), cRand.Intn(255))
+func genrateRGBColor() string {
+	v := rand.New(rand.NewSource(time.Now().Unix()))
+	return fmt.Sprintf("%02x%02x%02x", v.Intn(255), v.Intn(255), v.Intn(255))
 }

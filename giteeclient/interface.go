@@ -62,7 +62,7 @@ type Client interface {
 	GetBot() (sdk.User, error)
 	GetUserPermissionsOfRepo(org, repo, login string) (sdk.ProjectMemberPermission, error)
 
-	AddRepoLabel(org, repo, label string) error
+	CreateRepoLabel(org, repo, label, color string) error
 }
 
 type ListPullRequestOpt struct {
