@@ -496,5 +496,5 @@ func formatErr(err error, doWhat string) error {
 		return err
 	}
 
-	return fmt.Errorf("Failed to %s: %s", doWhat, err.Error())
+	return fmt.Errorf("failed to %s: %s", doWhat, err.Error())
 }
