@@ -1,7 +1,10 @@
 package giteeclient
 
 import (
+	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	sdk "gitee.com/openeuler/go-gitee/gitee"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -106,4 +109,9 @@ func GetPullRequestAction(e *sdk.PullRequestEvent) string {
 	}
 
 	return ""
+}
+
+func genrateLabelRandomColor() string {
+	cRand := rand.New(rand.NewSource(time.Now().Unix()))
+	return fmt.Sprintf("%02x%02x%02x", cRand.Intn(255), cRand.Intn(255), cRand.Intn(255))
 }
