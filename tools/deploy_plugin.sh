@@ -84,11 +84,12 @@ reset_image(){
 register_bot() {
     local bot=$1
     local events=$2
-    local file=$3
+    local namespace=$3
+    local file=$4
 
 cat << EOF >> $file
       - name: ${bot}
-        endpoint: http://service-${bot}.robot-gitee.svc.cluster.local:8888/gitee-hook
+        endpoint: http://service-${bot}.${namespace}.svc.cluster.local:8888/gitee-hook
         events:
 EOF
 
@@ -104,10 +105,11 @@ gen_deploy_yaml(){
     local bot=$1
     local image=$2
     local events=$3
+    local namespace=$4
 
     local path=$(pwd)
 
-    cd applications/robot-gitee
+    cd applications/${namespace}
 
     bot=$(underscore_to_hyphen $bot)
 
@@ -132,7 +134,7 @@ gen_deploy_yaml(){
 
     insertBefore "^commonLabels:" "- $bot"  ../kustomization.yaml
 
-    register_bot $bot "$events" ../access/configmap.yaml
+    register_bot $bot "$events" $namespace ../../robot-gitee/access/configmap.yaml
 
     cd $path
 }
@@ -140,9 +142,10 @@ gen_deploy_yaml(){
 update_image() {
     local bot=$1
     local image=$2
+    local namespace=$3
     local path=$(pwd)
 
-    cd applications/robot-gitee
+    cd applications/$namespace
 
     bot=$(underscore_to_hyphen $bot)
 
@@ -183,7 +186,7 @@ submit_pr() {
 }
 
 init() {
-    if [ $# -lt 6 ]; then
+    if [ $# -lt 7 ]; then
         cmd_help "init"
         exit 1
     fi
@@ -191,6 +194,29 @@ init() {
     local bot=$1
     local image=$2
     local events=$3
+    local namespace=$4
+    local git_user=$5
+    local git_user_password=$6
+    local git_user_email=$7
+
+    clone_infra_mindspore $git_user $git_user_password $git_user_email
+
+    cd ${upstream_repo}
+
+    gen_deploy_yaml $bot $image "$events" $namespace
+
+    submit_pr $bot $git_user $git_user_password "add deployment for bot $bot"
+}
+
+update_bot_image() {
+    if [ $# -lt 6 ]; then
+        cmd_help "update_bot_image"
+        exit 1
+    fi
+
+    local bot=$1
+    local image=$2
+    local namespace=$3
     local git_user=$4
     local git_user_password=$5
     local git_user_email=$6
@@ -199,28 +225,7 @@ init() {
 
     cd ${upstream_repo}
 
-    gen_deploy_yaml $bot $image "$events"
-
-    submit_pr $bot $git_user $git_user_password "add deployment for bot $bot"
-}
-
-update_bot_image() {
-    if [ $# -lt 5 ]; then
-        cmd_help "update_bot_image"
-        exit 1
-    fi
-
-    local bot=$1
-    local image=$2
-    local git_user=$3
-    local git_user_password=$4
-    local git_user_email=$5
-
-    clone_infra_mindspore $git_user $git_user_password $git_user_email
-
-    cd ${upstream_repo}
-
-    update_image $bot $image
+    update_image $bot $image $namespace
 
     submit_pr $bot $git_user $git_user_password "update image for bot $bot"
 }
@@ -242,10 +247,10 @@ EOF
     local cmd=$1
     case $cmd in
         "init")
-            echo "$me init bot-name image events git-user git-user-password git-user-email"
+            echo "$me init bot-name image events namespace git-user git-user-password git-user-email"
             ;;
         "update_bot_image")
-            echo "$me update_bot_image bot-name image git-user git-user-password git-user-email"
+            echo "$me update_bot_image bot-name image namespace git-user git-user-password git-user-email"
             ;;
         "help")
             echo "$me help other-child-cmd"
@@ -271,12 +276,12 @@ check_param 1
 cmd=$1
 case $cmd in
     "init")
-        check_param 7
-        init "$2" "$3" "$4" "$5" "$6" "$7"
+        check_param 8
+        init "$2" "$3" "$4" "$5" "$6" "$7" "$8"
         ;;
     "update_bot_image")
-        check_param 6
-        update_bot_image "$2" "$3" "$4" "$5" "$6"
+        check_param 7
+        update_bot_image "$2" "$3" "$4" "$5" "$6" "$7"
         ;;
     "--help")
         cmd_help
