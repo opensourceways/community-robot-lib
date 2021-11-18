@@ -443,9 +443,40 @@ func (c *client) GetIssueLabels(org, repo, number string) ([]sdk.Label, error) {
 	return labels, formatErr(err, "get issue labels")
 }
 
+func (c *client) UpdateIssueComment(org, repo string, commentID int32, comment string) error {
+	opt := sdk.IssueCommentPatchParam{Body: comment}
+	_, _, err := c.ac.IssuesApi.PatchV5ReposOwnerRepoIssuesCommentsId(
+		context.Background(), org, repo, commentID, opt)
+	return formatErr(err, "update comment of issue")
+}
+
 func (c *client) GetIssue(org, repo, number string) (sdk.Issue, error) {
 	issue, _, err := c.ac.IssuesApi.GetV5ReposOwnerRepoIssuesNumber(context.Background(), org, repo, number, nil)
 	return issue, formatErr(err, "get issue")
+}
+
+func (c *client) ListIssueComments(org, repo, number string) ([]sdk.Note, error) {
+	var r []sdk.Note
+
+	p := int32(1)
+	opt := sdk.GetV5ReposOwnerRepoIssuesNumberCommentsOpts{}
+	for {
+		opt.Page = optional.NewInt32(p)
+		cs, _, err := c.ac.IssuesApi.GetV5ReposOwnerRepoIssuesNumberComments(
+			context.Background(), org, repo, number, &opt)
+		if err != nil {
+			return nil, formatErr(err, "list comments of issue")
+		}
+
+		if len(cs) == 0 {
+			break
+		}
+
+		r = append(r, cs...)
+		p++
+	}
+
+	return r, nil
 }
 
 //GetRepoAllBranch get repository all branch

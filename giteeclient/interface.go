@@ -21,15 +21,13 @@ type Client interface {
 	AddMultiPRLabel(org, repo string, number int32, label []string) error
 	RemovePRLabel(org, repo string, number int32, label string) error
 	RemovePRLabels(org, repo string, number int32, labels []string) error
+	ReplacePRAllLabels(owner, repo string, number int32, labels []string) error
+	ListPROperationLogs(org, repo string, number int32) ([]sdk.OperateLog, error)
 
 	ClosePR(org, repo string, number int32) error
 	AssignPR(owner, repo string, number int32, logins []string) error
 	UnassignPR(owner, repo string, number int32, logins []string) error
 	GetPRCommits(org, repo string, number int32) ([]sdk.PullRequestCommits, error)
-
-	AssignGiteeIssue(org, repo string, number string, login string) error
-	UnassignGiteeIssue(org, repo string, number string, login string) error
-	CreateIssueComment(org, repo string, number string, comment string) error
 
 	IsCollaborator(owner, repo, login string) (bool, error)
 	IsMember(org, login string) (bool, error)
@@ -41,19 +39,20 @@ type Client interface {
 	GetGiteeRepo(org, repo string) (sdk.Project, error)
 	GetRepoLabels(owner, repo string) ([]sdk.Label, error)
 
+	AssignGiteeIssue(org, repo string, number string, login string) error
+	UnassignGiteeIssue(org, repo string, number string, login string) error
+	CreateIssueComment(org, repo string, number string, comment string) error
+	UpdateIssueComment(org, repo string, commentID int32, comment string) error
+	ListIssueComments(org, repo, number string) ([]sdk.Note, error)
+	GetIssueLabels(org, repo, number string) ([]sdk.Label, error)
 	RemoveIssueLabel(org, repo, number, label string) error
 	RemoveIssueLabels(org, repo, number string, label []string) error
 	AddIssueLabel(org, repo, number, label string) error
 	AddMultiIssueLabel(org, repo, number string, label []string) error
-
-	ReplacePRAllLabels(owner, repo string, number int32, labels []string) error
 	CloseIssue(owner, repo string, number string) error
 	ReopenIssue(owner, repo string, number string) error
 	UpdateIssue(owner, number string, param sdk.IssueUpdateParam) (sdk.Issue, error)
-	GetIssueLabels(org, repo, number string) ([]sdk.Label, error)
 	GetIssue(org, repo, number string) (sdk.Issue, error)
-
-	ListPROperationLogs(org, repo string, number int32) ([]sdk.OperateLog, error)
 
 	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
 	GetPathContent(org, repo, path, ref string) (sdk.Content, error)
