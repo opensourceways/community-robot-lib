@@ -84,12 +84,13 @@ build(){
     check_robot_name $(basename $repo_path)
     repo_path=$(dirname $repo_path)/$repo_name
 
+    repo_dir=$repo_dir/$repo_name
     if [ -d $repo_dir ]; then
         echo "$repo_dir is exist"
         return 1
     fi
 
-    mkdir $repo_dir
+    mkdir -p $repo_dir
     cd $repo_dir
 
     git clone https://github.com/opensourceways/community-robot-lib.git
