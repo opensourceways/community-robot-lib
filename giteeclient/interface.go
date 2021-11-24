@@ -9,6 +9,11 @@ type Client interface {
 	UpdatePullRequest(org, repo string, number int32, param sdk.PullRequestUpdateParam) (sdk.PullRequest, error)
 
 	ListCollaborators(org, repo string) ([]sdk.ProjectMember, error)
+	IsCollaborator(owner, repo, login string) (bool, error)
+	IsMember(org, login string) (bool, error)
+	RemoveRepoMember(org, repo, login string) error
+	AddRepoMember(org, repo, login, permission string) error
+
 	GetRef(org, repo, ref string) (string, error)
 	GetPullRequestChanges(org, repo string, number int32) ([]sdk.PullRequestFiles, error)
 	GetPRLabels(org, repo string, number int32) ([]sdk.Label, error)
@@ -29,14 +34,17 @@ type Client interface {
 	UnassignPR(owner, repo string, number int32, logins []string) error
 	GetPRCommits(org, repo string, number int32) ([]sdk.PullRequestCommits, error)
 
-	IsCollaborator(owner, repo, login string) (bool, error)
-	IsMember(org, login string) (bool, error)
 	GetGiteePullRequest(org, repo string, number int32) (sdk.PullRequest, error)
 	GetPRCommit(org, repo, SHA string) (sdk.RepoCommit, error)
 	MergePR(owner, repo string, number int32, opt sdk.PullRequestMergePutParam) error
 
 	GetRepos(org string) ([]sdk.Project, error)
 	GetGiteeRepo(org, repo string) (sdk.Project, error)
+	CreateRepo(org string, repo sdk.RepositoryPostParam) error
+	UpdateRepo(org, repo string, info sdk.RepoPatchParam) error
+
+	SetRepoReviewer(org, repo string, reviewer sdk.SetRepoReviewer) error
+	CreateRepoLabel(org, repo, label, color string) error
 	GetRepoLabels(owner, repo string) ([]sdk.Label, error)
 
 	AssignGiteeIssue(org, repo string, number string, login string) error
@@ -54,14 +62,16 @@ type Client interface {
 	UpdateIssue(owner, number string, param sdk.IssueUpdateParam) (sdk.Issue, error)
 	GetIssue(org, repo, number string) (sdk.Issue, error)
 
+	CreateBranch(org, repo, branch, parentBranch string) error
 	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
+	SetProtectionBranch(org, repo, branch string) error
+	CancelProtectionBranch(org, repo, branch string) error
+
 	GetPathContent(org, repo, path, ref string) (sdk.Content, error)
 	GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error)
 
 	GetBot() (sdk.User, error)
 	GetUserPermissionsOfRepo(org, repo, login string) (sdk.ProjectMemberPermission, error)
-
-	CreateRepoLabel(org, repo, label, color string) error
 }
 
 type ListPullRequestOpt struct {

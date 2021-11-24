@@ -525,6 +525,76 @@ func (c *client) CreateRepoLabel(org, repo, label, color string) error {
 	return formatErr(err, "create a repo label")
 }
 
+func (c *client) CreateBranch(org, repo, branch, parentBranch string) error {
+	_, _, err := c.ac.RepositoriesApi.PostV5ReposOwnerRepoBranches(
+		context.Background(), org, repo,
+		sdk.CreateBranchParam{BranchName: branch, Refs: parentBranch},
+	)
+
+	return formatErr(err, "create a branch")
+}
+
+func (c *client) SetProtectionBranch(org, repo, branch string) error {
+	_, _, err := c.ac.RepositoriesApi.PutV5ReposOwnerRepoBranchesBranchProtection(
+		context.Background(), org, repo, branch, sdk.BranchProtectionPutParam{},
+	)
+
+	return formatErr(err, "set protection branch")
+}
+
+func (c *client) CancelProtectionBranch(org, repo, branch string) error {
+	_, err := c.ac.RepositoriesApi.DeleteV5ReposOwnerRepoBranchesBranchProtection(
+		context.Background(), org, repo, branch,
+		&sdk.DeleteV5ReposOwnerRepoBranchesBranchProtectionOpts{},
+	)
+
+	return formatErr(err, "cancel protection branch")
+}
+
+func (c *client) AddRepoMember(org, repo, login, permission string) error {
+	_, _, err := c.ac.RepositoriesApi.PutV5ReposOwnerRepoCollaboratorsUsername(
+		context.Background(), org, repo, login,
+		sdk.ProjectMemberPutParam{
+			Permission: permission,
+		},
+	)
+
+	return formatErr(err, "add repo member")
+}
+
+func (c *client) RemoveRepoMember(org, repo, login string) error {
+	_, err := c.ac.RepositoriesApi.DeleteV5ReposOwnerRepoCollaboratorsUsername(
+		context.Background(), org, repo, login, nil,
+	)
+
+	// TODO: 404
+	return formatErr(err, "remove repo member")
+}
+
+func (c *client) CreateRepo(org string, repo sdk.RepositoryPostParam) error {
+	_, _, err := c.ac.RepositoriesApi.PostV5OrgsOrgRepos(
+		context.Background(), org, repo,
+	)
+
+	// TODO: handle recreate
+	return formatErr(err, "create repo")
+}
+
+func (c *client) SetRepoReviewer(org, repo string, reviewer sdk.SetRepoReviewer) error {
+	_, err := c.ac.RepositoriesApi.PutV5ReposOwnerRepoReviewer(
+		context.Background(), org, repo, reviewer,
+	)
+
+	return formatErr(err, "set repo reviewer")
+}
+
+func (c *client) UpdateRepo(org, repo string, info sdk.RepoPatchParam) error {
+	_, _, err := c.ac.RepositoriesApi.PatchV5ReposOwnerRepo(
+		context.Background(), org, repo, info,
+	)
+
+	return formatErr(err, "update repo")
+}
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
