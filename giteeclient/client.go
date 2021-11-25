@@ -260,7 +260,7 @@ func (c *client) RemovePRLabel(org, repo string, number int32, label string) err
 	v, err := c.ac.PullRequestsApi.DeleteV5ReposOwnerRepoPullsLabel(
 		context.Background(), org, repo, number, label, nil)
 
-	if v != nil && v.StatusCode == 404 {
+	if err == nil || (v != nil && v.StatusCode == 404) {
 		return nil
 	}
 	return formatErr(err, "remove label of pr")
@@ -322,25 +322,27 @@ func (c *client) CreateIssueComment(org, repo string, number string, comment str
 func (c *client) IsCollaborator(owner, repo, login string) (bool, error) {
 	v, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoCollaboratorsUsername(
 		context.Background(), owner, repo, login, nil)
-	if err != nil {
-		if v.StatusCode == 404 {
-			return false, nil
-		}
-		return false, formatErr(err, "get collaborator of pr")
+	if err == nil {
+		return true, nil
 	}
-	return true, nil
+
+	if v != nil && v.StatusCode == 404 {
+		return false, nil
+	}
+	return false, formatErr(err, "get collaborator of pr")
 }
 
 func (c *client) IsMember(org, login string) (bool, error) {
 	_, v, err := c.ac.OrganizationsApi.GetV5OrgsOrgMembershipsUsername(
 		context.Background(), org, login, nil)
-	if err != nil {
-		if v.StatusCode == 404 {
-			return false, nil
-		}
-		return false, formatErr(err, "get member of org")
+	if err == nil {
+		return true, nil
 	}
-	return true, nil
+
+	if v != nil && v.StatusCode == 404 {
+		return false, nil
+	}
+	return false, formatErr(err, "get member of org")
 }
 
 func (c *client) GetPRCommit(org, repo, SHA string) (sdk.RepoCommit, error) {
@@ -362,6 +364,10 @@ func (c *client) MergePR(owner, repo string, number int32, opt sdk.PullRequestMe
 func (c *client) GetGiteeRepo(org, repo string) (sdk.Project, error) {
 	v, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepo(context.Background(), org, repo, nil)
 	return v, formatErr(err, "get repo")
+}
+
+func (c *client) GetRepo(org, repo string) (sdk.Project, error) {
+	return c.GetGiteeRepo(org, repo)
 }
 
 func (c *client) GetRepos(org string) ([]sdk.Project, error) {
@@ -563,11 +569,13 @@ func (c *client) AddRepoMember(org, repo, login, permission string) error {
 }
 
 func (c *client) RemoveRepoMember(org, repo, login string) error {
-	_, err := c.ac.RepositoriesApi.DeleteV5ReposOwnerRepoCollaboratorsUsername(
+	v, err := c.ac.RepositoriesApi.DeleteV5ReposOwnerRepoCollaboratorsUsername(
 		context.Background(), org, repo, login, nil,
 	)
 
-	// TODO: 404
+	if err == nil || (v != nil && v.StatusCode == 404) {
+		return nil
+	}
 	return formatErr(err, "remove repo member")
 }
 
@@ -576,7 +584,6 @@ func (c *client) CreateRepo(org string, repo sdk.RepositoryPostParam) error {
 		context.Background(), org, repo,
 	)
 
-	// TODO: handle recreate
 	return formatErr(err, "create repo")
 }
 

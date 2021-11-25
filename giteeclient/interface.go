@@ -39,9 +39,10 @@ type Client interface {
 	MergePR(owner, repo string, number int32, opt sdk.PullRequestMergePutParam) error
 
 	GetRepos(org string) ([]sdk.Project, error)
-	GetGiteeRepo(org, repo string) (sdk.Project, error)
 	CreateRepo(org string, repo sdk.RepositoryPostParam) error
 	UpdateRepo(org, repo string, info sdk.RepoPatchParam) error
+	GetRepo(org, repo string) (sdk.Project, error)
+	GetGiteeRepo(org, repo string) (sdk.Project, error)
 
 	SetRepoReviewer(org, repo string, reviewer sdk.SetRepoReviewer) error
 	CreateRepoLabel(org, repo, label, color string) error
