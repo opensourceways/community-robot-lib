@@ -2,6 +2,7 @@ package giteeclient
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -500,6 +501,20 @@ func (c *client) GetPathContent(org, repo, path, ref string) (sdk.Content, error
 	return content, formatErr(err, "get path content")
 }
 
+func (c *client) CreateFile(org, repo, branch, path, content, commitMsg string) (sdk.CommitContent, error) {
+	opt := sdk.NewFileParam{
+		Message: commitMsg,
+		Branch:  branch,
+		Content: base64.StdEncoding.EncodeToString([]byte(content)),
+	}
+
+	v, _, err := c.ac.RepositoriesApi.PostV5ReposOwnerRepoContentsPath(
+		context.Background(), org, repo, path, opt,
+	)
+
+	return v, formatErr(err, "create file")
+}
+
 //GetDirectoryTree Get the directory tree under a specific repository branch or commit sha
 func (c *client) GetDirectoryTree(org, repo, sha string, recursive int32) (sdk.Tree, error) {
 	op := sdk.GetV5ReposOwnerRepoGitTreesShaOpts{Recursive: optional.NewInt32(recursive)}
@@ -602,6 +617,7 @@ func (c *client) UpdateRepo(org, repo string, info sdk.RepoPatchParam) error {
 
 	return formatErr(err, "update repo")
 }
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
