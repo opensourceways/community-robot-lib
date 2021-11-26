@@ -100,7 +100,7 @@ func (d *dispatcher) handlePullRequestEvent(e *sdk.PullRequestEvent, l *logrus.E
 
 	l = l.WithFields(logrus.Fields{
 		logFieldURL:    e.PullRequest.HtmlUrl,
-		logFieldAction: *e.ActionDesc,
+		logFieldAction: e.GetActionDesc(),
 	})
 
 	if err := d.h.pullRequestHandler(e, d.getConfig(), l); err != nil {
