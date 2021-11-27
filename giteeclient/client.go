@@ -497,8 +497,19 @@ func (c *client) GetRepoAllBranch(org, repo string) ([]sdk.Branch, error) {
 func (c *client) GetPathContent(org, repo, path, ref string) (sdk.Content, error) {
 	op := sdk.GetV5ReposOwnerRepoContentsPathOpts{}
 	op.Ref = optional.NewString(ref)
-	content, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoContentsPath(context.Background(), org, repo, path, &op)
-	return content, formatErr(err, "get path content")
+
+	content, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoContentsPath(
+		context.Background(), org, repo, path, &op,
+	)
+	if err != nil {
+		return content, formatErr(err, "get path content")
+	}
+
+	if content.DownloadUrl == "" {
+		return content, formatErr(fmt.Errorf("file does not exist"), "get path content")
+	}
+
+	return content, nil
 }
 
 func (c *client) CreateFile(org, repo, branch, path, content, commitMsg string) (sdk.CommitContent, error) {
