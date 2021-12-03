@@ -88,7 +88,7 @@ register_bot() {
     local file=$4
 
 cat << EOF >> $file
-      - name: ${bot}
+      - name: ${namespace}-${bot}
         endpoint: http://service-${bot}.${namespace}.svc.cluster.local:8888/gitee-hook
         events:
 EOF
