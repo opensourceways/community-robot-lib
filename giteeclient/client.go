@@ -493,6 +493,13 @@ func (c *client) GetRepoAllBranch(org, repo string) ([]sdk.Branch, error) {
 	return branches, formatErr(err, "get repo all branch")
 }
 
+// GetBranchDetail get branch detail
+func (c *client) GetBranchDetail(org, repo, branch string) (sdk.Branch, error) {
+	detail, _, err := c.ac.RepositoriesApi.GetV5ReposOwnerRepoBranchesBranch(context.Background(), org, repo, branch,
+		nil)
+	return detail, formatErr(err, "get branch detail")
+}
+
 //GetPathContent Get the content under a specific repository
 func (c *client) GetPathContent(org, repo, path, ref string) (sdk.Content, error) {
 	op := sdk.GetV5ReposOwnerRepoContentsPathOpts{}

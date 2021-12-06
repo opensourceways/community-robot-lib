@@ -67,6 +67,7 @@ type Client interface {
 	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
 	SetProtectionBranch(org, repo, branch string) error
 	CancelProtectionBranch(org, repo, branch string) error
+	GetBranchDetail(org, repo, branch string) (sdk.Branch, error)
 
 	CreateFile(org, repo, branch, path, content, commitMsg string) (sdk.CommitContent, error)
 	GetPathContent(org, repo, path, ref string) (sdk.Content, error)
