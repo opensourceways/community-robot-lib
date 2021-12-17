@@ -633,6 +633,16 @@ func (c *client) UpdateRepo(org, repo string, info sdk.RepoPatchParam) error {
 	return formatErr(err, "update repo")
 }
 
+func (c *client) GetEnterprisesMember(enterprise, login string) (sdk.EnterpriseMember, error) {
+	member, _, err := c.ac.EnterprisesApi.GetV5EnterprisesEnterpriseMembersUsername(
+		context.Background(),
+		enterprise, login,
+		nil,
+	)
+
+	return member, formatErr(err,"get enterprise")
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
