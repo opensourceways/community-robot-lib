@@ -33,13 +33,15 @@ In response to [this](%s):
 `
 	c := e.GetComment()
 
-	var quoted []string
-	for _, l := range strings.Split(c.GetBody(), "\n") {
-		quoted = append(quoted, ">"+l)
-	}
-
 	return fmt.Sprintf(
 		format, e.GetCommenter(), reply,
-		fmt.Sprintf(details, c.GetHtmlUrl(), strings.Join(quoted, "\n")),
+		fmt.Sprintf(details, c.GetHtmlUrl(), quotedComment(c.GetBody())),
 	)
+}
+
+func quotedComment(comment string) string {
+	// Quote the user's comment by prepending ">" to each line.
+	comment = strings.ReplaceAll(comment, "\n", "\n>")
+
+	return ">" + comment
 }
