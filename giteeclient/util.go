@@ -35,13 +35,6 @@ In response to [this](%s):
 
 	return fmt.Sprintf(
 		format, e.GetCommenter(), reply,
-		fmt.Sprintf(details, c.GetHtmlUrl(), quotedComment(c.GetBody())),
+		fmt.Sprintf(details, c.GetHtmlUrl(), strings.ReplaceAll(">"+c.GetBody(), "\n", "\n>")),
 	)
-}
-
-func quotedComment(comment string) string {
-	// Quote the user's comment by prepending ">" to each line.
-	comment = strings.ReplaceAll(comment, "\n", "\n>")
-
-	return ">" + comment
 }
