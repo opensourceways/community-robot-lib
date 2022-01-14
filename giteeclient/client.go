@@ -641,6 +641,20 @@ func (c *client) GetEnterprisesMember(enterprise, login string) (sdk.EnterpriseM
 	return member, formatErr(err, "get enterprise")
 }
 
+func (c *client) AddProjectLabels(org, repo string, label []string) error {
+	opt := sdk.PullRequestLabelPostParam{Body: label}
+	_, _, err := c.ac.LabelsApi.PostV5ReposOwnerRepoProjectLabels(
+		context.Background(), org, repo, opt)
+	return formatErr(err, "add project label")
+}
+
+func (c *client) UpdateProjectLabels(org, repo string, label []string) error {
+	opt := sdk.PullRequestLabelPostParam{Body: label}
+	_, _, err := c.ac.LabelsApi.PutV5ReposOwnerRepoProjectLabels(
+		context.Background(), org, repo, opt)
+	return formatErr(err, "update project label")
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err

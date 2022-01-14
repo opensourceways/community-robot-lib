@@ -64,6 +64,9 @@ type Client interface {
 	UpdateIssue(owner, number string, param sdk.IssueUpdateParam) (sdk.Issue, error)
 	GetIssue(org, repo, number string) (sdk.Issue, error)
 
+	AddProjectLabels(org, repo string, label []string) error
+	UpdateProjectLabels(org, repo string, label []string) error
+
 	CreateBranch(org, repo, branch, parentBranch string) error
 	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
 	SetProtectionBranch(org, repo, branch string) error
