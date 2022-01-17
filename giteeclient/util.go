@@ -3,6 +3,7 @@ package giteeclient
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
@@ -37,4 +38,13 @@ In response to [this](%s):
 		format, e.GetCommenter(), reply,
 		fmt.Sprintf(details, c.GetHtmlUrl(), strings.ReplaceAll(">"+c.GetBody(), "\n", "\n>")),
 	)
+}
+
+func NormalEmail(email string) string {
+	emailRe := regexp.MustCompile(`[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,6}`)
+	if v := emailRe.FindStringSubmatch(email); len(v) > 0 {
+		return v[0]
+	}
+
+	return email
 }
