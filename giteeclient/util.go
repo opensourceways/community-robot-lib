@@ -47,5 +47,5 @@ func NormalEmail(email string) string {
 		return v[0]
 	}
 
-	return email
+	return ""
 }
