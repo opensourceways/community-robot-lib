@@ -10,6 +10,8 @@ import (
 	sdk "github.com/opensourceways/go-gitee/gitee"
 )
 
+var emailRe = regexp.MustCompile(`[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,6}`)
+
 func genrateRGBColor() string {
 	v := rand.New(rand.NewSource(time.Now().Unix()))
 	return fmt.Sprintf("%02x%02x%02x", v.Intn(255), v.Intn(255), v.Intn(255))
@@ -41,7 +43,6 @@ In response to [this](%s):
 }
 
 func NormalEmail(email string) string {
-	emailRe := regexp.MustCompile(`[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,6}`)
 	if v := emailRe.FindStringSubmatch(email); len(v) > 0 {
 		return v[0]
 	}
