@@ -3,14 +3,11 @@ package giteeclient
 import (
 	"fmt"
 	"math/rand"
-	"regexp"
 	"strings"
 	"time"
 
 	sdk "github.com/opensourceways/go-gitee/gitee"
 )
-
-var emailRe = regexp.MustCompile(`[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,6}`)
 
 func genrateRGBColor() string {
 	v := rand.New(rand.NewSource(time.Now().Unix()))
@@ -40,12 +37,4 @@ In response to [this](%s):
 		format, e.GetCommenter(), reply,
 		fmt.Sprintf(details, c.GetHtmlUrl(), strings.ReplaceAll(">"+c.GetBody(), "\n", "\n>")),
 	)
-}
-
-func NormalEmail(email string) string {
-	if v := emailRe.FindStringSubmatch(email); len(v) > 0 {
-		return v[0]
-	}
-
-	return ""
 }
