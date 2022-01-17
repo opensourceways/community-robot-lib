@@ -6,6 +6,7 @@ go_library(
         "httpclient.go",
         "multi_error.go",
         "timer.go",
+        "util.go",
     ],
     importpath = "github.com/opensourceways/community-robot-lib/utils",
     visibility = ["//visibility:public"],
