@@ -16,6 +16,7 @@ func (o *ServiceOptions) Validate() error {
 	if o.ConfigFile == "" {
 		return fmt.Errorf("missing config-file")
 	}
+
 	return nil
 }
 

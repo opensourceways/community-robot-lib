@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "config_agent.go",
+        "mq.go",
         "repo_filter.go",
     ],
     importpath = "github.com/opensourceways/community-robot-lib/config",
