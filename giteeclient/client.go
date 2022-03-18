@@ -655,6 +655,18 @@ func (c *client) UpdateProjectLabels(org, repo string, label []string) error {
 	return formatErr(err, "update project label")
 }
 
+func (c *client) CreateIssue(org, repo, title, body string) (sdk.Issue, error) {
+	param := sdk.IssueCreateParam{
+		Repo:  repo,
+		Body:  body,
+		Title: title,
+	}
+
+	issue, _, err := c.ac.IssuesApi.PostV5ReposOwnerIssues(context.Background(), org, param)
+
+	return issue, formatErr(err, "create issue")
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
