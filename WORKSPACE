@@ -891,8 +891,8 @@ go_repository(
 go_repository(
     name = "com_github_opensourceways_go_gitee",
     importpath = "github.com/opensourceways/go-gitee",
-    sum = "h1:iVRo+1ZmLYfDA6beHuDoJeteGtDqzUIbXN5EdQ9z0Bo=",
-    version = "v0.0.0-20220118023153-0c41490fb43b",
+    sum = "h1:KJ0eKHsLxypJPvtNPpad5nD+zHe3WMSLfviHEi0XeL8=",
+    version = "v0.0.0-20220317072128-684a16690ec1",
 )
 
 go_repository(
@@ -1089,4 +1089,18 @@ go_repository(
     importpath = "github.com/xdg-go/stringprep",
     sum = "h1:6iq84/ryjjeRmMJwxutI51F2GIPlP5BfTvXHeYjyhBc=",
     version = "v1.0.2",
+)
+
+go_repository(
+    name = "com_github_google_go_github_v36",
+    importpath = "github.com/google/go-github/v36",
+    sum = "h1:ndCzM616/oijwufI7nBRa+5eZHLldT+4yIB68ib5ogs=",
+    version = "v36.0.0",
+)
+
+go_repository(
+    name = "com_github_google_go_querystring",
+    importpath = "github.com/google/go-querystring",
+    sum = "h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASuANWTrk=",
+    version = "v1.0.0",
 )

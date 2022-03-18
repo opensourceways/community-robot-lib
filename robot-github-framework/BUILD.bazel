@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dispatcher.go",
+        "handlers.go",
+        "service.go",
+    ],
+    importpath = "github.com/opensourceways/community-robot-lib/robot-github-framework",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//config:go_default_library",
+        "//githubclient:go_default_library",
+        "//interrupts:go_default_library",
+        "//options:go_default_library",
+        "@com_github_google_go_github_v36//github:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+    ],
+)

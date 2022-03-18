@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "gitee.go",
+        "github.go",
         "service.go",
     ],
     importpath = "github.com/opensourceways/community-robot-lib/options",
