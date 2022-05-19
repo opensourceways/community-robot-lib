@@ -3,7 +3,7 @@ package mq
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"os"
+	"io/ioutil"
 )
 
 type MQConfig struct {
@@ -34,7 +34,7 @@ func (tc *TLSConfig) TLSConfig() (t *tls.Config, err error) {
 			return nil, err
 		}
 
-		caCert, err := os.ReadFile(tc.CAFile)
+		caCert, err := ioutil.ReadFile(tc.CAFile)
 		if err != nil {
 			return nil, err
 		}
