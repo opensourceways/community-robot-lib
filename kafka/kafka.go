@@ -1,4 +1,4 @@
-package mq
+package kafka
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
+	"github.com/opensourceways/community-robot-lib/mq"
 	"github.com/opensourceways/community-robot-lib/utils"
 )
 
 type kfkMQ struct {
-	opts           Options
+	opts           mq.Options
 	producer       sarama.SyncProducer
 	consumers      []sarama.Client
 	consumerGroups [] sarama.ConsumerGroup
@@ -22,7 +23,7 @@ type kfkMQ struct {
 	log            *logrus.Entry
 }
 
-func (kMQ *kfkMQ) Init(opts ...Option) error {
+func (kMQ *kfkMQ) Init(opts ...mq.Option) error {
 	kMQ.mutex.RLock()
 	if kMQ.connected {
 		return fmt.Errorf("mq is connected can't init")
@@ -44,13 +45,13 @@ func (kMQ *kfkMQ) Init(opts ...Option) error {
 	}
 
 	if kMQ.opts.Codec == nil {
-		kMQ.opts.Codec = JsonCodec{}
+		kMQ.opts.Codec = mq.JsonCodec{}
 	}
 
 	return nil
 }
 
-func (kMQ *kfkMQ) Options() Options {
+func (kMQ *kfkMQ) Options() mq.Options {
 	return kMQ.opts
 }
 
@@ -113,7 +114,7 @@ func (kMQ *kfkMQ) Disconnect() error {
 }
 
 // Publish a message to a topic in the kafka cluster.
-func (kMQ *kfkMQ) Publish(topic string, msg *Message, opts ...PublishOption) error {
+func (kMQ *kfkMQ) Publish(topic string, msg *mq.Message, opts ...mq.PublishOption) error {
 	d, err := kMQ.opts.Codec.Marshal(msg)
 	if err != nil {
 		return err
@@ -133,9 +134,9 @@ func (kMQ *kfkMQ) Publish(topic string, msg *Message, opts ...PublishOption) err
 	return err
 }
 
-// Subscribe to kafka message topics, each subscription generates a kafka consumer group.
-func (kMQ *kfkMQ) Subscribe(topics string, h Handler, opts ...SubscribeOption) (Subscriber, error) {
-	opt := SubscribeOptions{
+// Subscribe to kafka message topics, each subscription generates a kafka groupConsumer group.
+func (kMQ *kfkMQ) Subscribe(topics string, h mq.Handler, opts ...mq.SubscribeOption) (mq.Subscriber, error) {
+	opt := mq.SubscribeOptions{
 		AutoAck: true,
 		Queue:   uuid.New().String(),
 	}
@@ -152,7 +153,7 @@ func (kMQ *kfkMQ) Subscribe(topics string, h Handler, opts ...SubscribeOption) (
 		return nil, err
 	}
 
-	cg := &consumerGroup{
+	gc := &groupConsumer{
 		handler: h,
 		subOpts: opt,
 		kOpts:   kMQ.opts,
@@ -167,7 +168,7 @@ func (kMQ *kfkMQ) Subscribe(topics string, h Handler, opts ...SubscribeOption) (
 					kMQ.log.Errorf("consumer error: %v", err)
 				}
 			default:
-				err := g.Consume(kMQ.opts.Context, []string{topics}, cg)
+				err := g.Consume(kMQ.opts.Context, []string{topics}, gc)
 				switch err {
 				case sarama.ErrClosedConsumerGroup:
 					return
@@ -181,12 +182,10 @@ func (kMQ *kfkMQ) Subscribe(topics string, h Handler, opts ...SubscribeOption) (
 			if kMQ.opts.Context.Err() != nil {
 				return
 			}
-
-			cg.ready = make(chan bool)
 		}
 	}()
 
-	<-cg.ready
+	<-gc.ready
 
 	kMQ.mutex.Lock()
 	kMQ.consumerGroups = append(kMQ.consumerGroups, g)
@@ -234,71 +233,75 @@ func (kMQ *kfkMQ) saramaClusterClient() (sarama.Client, error) {
 	return cs, nil
 }
 
-// consumerGroup represents a Sarama consumer group consumer
-type consumerGroup struct {
-	handler Handler
-	subOpts SubscribeOptions
-	kOpts   Options
+// groupConsumer represents a Sarama consumer group consumer
+type groupConsumer struct {
+	handler mq.Handler
+	subOpts mq.SubscribeOptions
+	kOpts   mq.Options
 	sess    sarama.ConsumerGroupSession
 
 	ready chan bool
+	once  sync.Once
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
-func (cg *consumerGroup) Setup(sarama.ConsumerGroupSession) error {
-	close(cg.ready)
+func (gc *groupConsumer) Setup(sarama.ConsumerGroupSession) error {
+	gc.once.Do(func() {
+		close(gc.ready)
+	})
+
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (cg *consumerGroup) Cleanup(sarama.ConsumerGroupSession) error {
+func (gc *groupConsumer) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
-func (cg *consumerGroup) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+// ConsumeClaim must start a groupConsumer loop of ConsumerGroupClaim's Messages().
+func (gc *groupConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		var m Message
+		var m mq.Message
 
 		ke := &kEvent{km: msg, m: &m, sess: session}
-		eHandler := cg.kOpts.ErrorHandler
+		eHandler := gc.kOpts.ErrorHandler
 
-		if err := cg.kOpts.Codec.Unmarshal(msg.Value, &m); err != nil {
+		if err := gc.kOpts.Codec.Unmarshal(msg.Value, &m); err != nil {
 			ke.err = err
 			ke.m.Body = msg.Value
 
 			if eHandler == nil {
-				cg.kOpts.Log.Errorf("unmarshal kafka msg fail with error : %v", err)
+				gc.kOpts.Log.Errorf("unmarshal kafka msg fail with error : %v", err)
 
 				continue
 			}
 
 			if err := eHandler(ke); err != nil {
-				cg.kOpts.Log.Error(err)
+				gc.kOpts.Log.Error(err)
 			}
 		}
 
-		if cg.handler == nil {
-			cg.handler = func(event Event) error {
+		if gc.handler == nil {
+			gc.handler = func(event mq.Event) error {
 				return fmt.Errorf("msg handler func is nil")
 			}
 		}
 
-		if err := cg.handler(ke); err != nil {
+		if err := gc.handler(ke); err != nil {
 			ke.err = err
 
 			if eHandler == nil {
-				cg.kOpts.Log.Errorf("subscriber error: %v", err)
+				gc.kOpts.Log.Errorf("subscriber error: %v", err)
 
 				continue
 			}
 
 			if err := eHandler(ke); err != nil {
-				cg.kOpts.Log.Error(err)
+				gc.kOpts.Log.Error(err)
 			}
 		}
 
-		if cg.subOpts.AutoAck {
+		if gc.subOpts.AutoAck {
 			_ = ke.Ack()
 		}
 
@@ -310,7 +313,7 @@ func (cg *consumerGroup) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 type kEvent struct {
 	err error
 	km  *sarama.ConsumerMessage
-	m   *Message
+	m   *mq.Message
 
 	sess sarama.ConsumerGroupSession
 }
@@ -323,7 +326,7 @@ func (ke *kEvent) Topic() string {
 	return ""
 }
 
-func (ke *kEvent) Message() *Message {
+func (ke *kEvent) Message() *mq.Message {
 	return ke.m
 }
 
@@ -350,10 +353,10 @@ func (ke *kEvent) Extra() map[string]interface{} {
 type subscriber struct {
 	cg   sarama.ConsumerGroup
 	t    string
-	opts SubscribeOptions
+	opts mq.SubscribeOptions
 }
 
-func (s *subscriber) Options() SubscribeOptions {
+func (s *subscriber) Options() mq.SubscribeOptions {
 	return s.opts
 }
 
@@ -365,9 +368,9 @@ func (s *subscriber) Unsubscribe() error {
 	return s.cg.Close()
 }
 
-func NewMQ(opts ...Option) MQ {
-	options := Options{
-		Codec:   JsonCodec{},
+func NewMQ(opts ...mq.Option) mq.MQ {
+	options := mq.Options{
+		Codec:   mq.JsonCodec{},
 		Context: context.Background(),
 	}
 

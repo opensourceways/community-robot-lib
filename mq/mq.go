@@ -67,31 +67,3 @@ func (msg Message) MessageKey() string {
 // The handler is passed a publication interface which contains the
 // message and optional Ack method to acknowledge receipt of the message.
 type Handler func(Event) error
-
-var (
-	DefaultMQ = NewMQ()
-)
-
-func Init(opts ...Option) error {
-	return DefaultMQ.Init(opts...)
-}
-
-func Connect() error {
-	return DefaultMQ.Connect()
-}
-
-func Disconnect() error {
-	return DefaultMQ.Disconnect()
-}
-
-func Publish(topic string, msg *Message, opts ...PublishOption) error {
-	return DefaultMQ.Publish(topic, msg, opts...)
-}
-
-func Subscribe(topic string, handler Handler, opts ...SubscribeOption) (Subscriber, error) {
-	return DefaultMQ.Subscribe(topic, handler, opts...)
-}
-
-func String() string {
-	return DefaultMQ.String()
-}
