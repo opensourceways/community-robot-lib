@@ -2,14 +2,11 @@ package options
 
 import (
 	"flag"
-	"fmt"
 )
 
-// GithubOptions holds options for interacting with Gitee.
+// GithubOptions holds options for interacting with Github.
 type GithubOptions struct {
 	TokenPath     string
-	RepoCacheDir  string
-	CacheRepoOnPV bool
 }
 
 // NewGithubOptions creates a GiteeOptions with default values.
@@ -36,15 +33,9 @@ func (o *GithubOptions) addFlags(defaultGithubTokenPath string, fs *flag.FlagSet
 		defaultGithubTokenPath,
 		"Path to the file containing the Gitee OAuth secret.",
 	)
-	fs.StringVar(&o.RepoCacheDir, "repo-cache-dir", "", "Path to which clone repo.")
-	fs.BoolVar(&o.CacheRepoOnPV, "cache-repo-on-pv", false, "Specify whether to cache repo on persistent volume.")
 }
 
 // Validate validates Gitee options.
 func (o GithubOptions) Validate() error {
-	if o.CacheRepoOnPV && o.RepoCacheDir == "" {
-		return fmt.Errorf("must set repo-cache-dir if caching repo on persistent volume")
-	}
-
 	return nil
 }
