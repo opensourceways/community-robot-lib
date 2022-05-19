@@ -54,8 +54,8 @@ func ErrorHandler(h Handler) Option {
 	}
 }
 
-// TLSCfg Specify TLS Config
-func TLSCfg(t *tls.Config) Option {
+// SetTLSConfig Specify TLS Config
+func SetTLSConfig(t *tls.Config) Option {
 	return func(o *Options) {
 		o.TLSConfig = t
 	}
