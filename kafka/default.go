@@ -15,12 +15,10 @@ func Connect() error {
 }
 
 func Disconnect() error {
-
 	return DefaultMQ.Disconnect()
 }
 
 func Publish(topic string, msg *mq.Message, opts ...mq.PublishOption) error {
-
 	return DefaultMQ.Publish(topic, msg, opts...)
 }
 

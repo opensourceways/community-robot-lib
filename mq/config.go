@@ -10,10 +10,10 @@ type MQConfig struct {
 	// Addresses of the mq cluster
 	Addresses []string `json:"addresses,omitempty"`
 
-	TLSConf
+	TLSConfig
 }
 
-type TLSConf struct {
+type TLSConfig struct {
 	// CertFile the optional certificate file for client authentication
 	CertFile string `json:"cert_file,omitempty"`
 
@@ -27,7 +27,7 @@ type TLSConf struct {
 	VerifySSL bool `json:"verify_ssl,omitempty"`
 }
 
-func (tc *TLSConf) TLSConfig() (t *tls.Config, err error) {
+func (tc *TLSConfig) TLSConfig() (t *tls.Config, err error) {
 	if tc.CertFile != "" && tc.KeyFile != "" && tc.CAFile != "" {
 		cert, err := tls.LoadX509KeyPair(tc.CertFile, tc.KeyFile)
 		if err != nil {
