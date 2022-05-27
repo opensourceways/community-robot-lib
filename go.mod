@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/opensourceways/go-gitee v0.0.0-20220331060602-b86c6d95a2a8
 	github.com/sirupsen/logrus v1.8.1
+	github.com/xanzy/go-gitlab v0.66.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	k8s.io/apimachinery v0.24.0
 	sigs.k8s.io/yaml v1.3.0
