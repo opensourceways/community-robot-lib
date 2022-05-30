@@ -117,8 +117,7 @@ build(){
 
     repo_path=${repo_path//\//\\\/}
 
-    sed -i -e "s/{REPO_PATH}/${repo_path}/" ./BUILD.bazel
-    sed -i -e "s/{ROBOT_NAME}/${robot_name}/" ./BUILD.bazel
+    sed -i -e "s/{ROBOT_NAME}/${robot_name}/" ./Dockerfile
 
     sed -i -e "s/{REPO_PATH}/${repo_path}/" ./build.sh
 
