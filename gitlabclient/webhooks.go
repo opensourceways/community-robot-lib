@@ -1,10 +1,6 @@
 package gitlabclient
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -55,7 +51,7 @@ func ValidateWebhook(
 		status = http.StatusBadRequest
 		responseHTTPError(
 			w, status,
-			"400 Bad Request: Hook only accepts Content-Type: application/json - please reconfigure this hook on GitHub",
+			"400 Bad Request: Hook only accepts Content-Type: application/json - please reconfigure this hook on Gitlab",
 		)
 
 		return
@@ -69,7 +65,7 @@ func ValidateWebhook(
 	}
 
 	// Validate the payload with our HMAC secret.
-	if sig != payloadSignature(eventGUID, tokenGenerator()) {
+	if sig != tokenGenerator() {
 		status = http.StatusForbidden
 		responseHTTPError(w, status, "403 Forbidden: Invalid X-Gitlab-Token")
 		return
@@ -86,17 +82,6 @@ func ValidateWebhook(
 	ok = true
 
 	return
-}
-
-func payloadSignature(timestamp, key string) string {
-	mac := hmac.New(sha256.New, []byte(key))
-
-	c := fmt.Sprintf("%s\n%s", timestamp, key)
-	mac.Write([]byte(c))
-
-	h := mac.Sum(nil)
-
-	return base64.StdEncoding.EncodeToString(h)
 }
 
 func responseHTTPError(w http.ResponseWriter, statusCode int, response string) {

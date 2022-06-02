@@ -54,12 +54,14 @@ func main() {
 
 	defer secretAgent.Stop()
 
-	c, err := gitlabclient.NewGitlabClient(string(secretAgent.GetTokenGenerator(o.gitlab.TokenPath)()), "https://source.openeuler.sh/api/v4")
-	if err != nil {
-		logrus.WithError(err).Fatal("Invalid client")
-	}
+	//c, err := gitlabclient.NewGitlabClient(string(secretAgent.GetTokenGenerator(o.gitlab.TokenPath)()), "https://source.openeuler.sh/api/v4")
+	// c, err := gitlabclient.NewGitlabClient(secretAgent.GetTokenGenerator(o.gitlab.TokenPath), "https://source.openeuler.sh/api/v4")
+	c := gitlabclient.NewGitlabClient(secretAgent.GetTokenGenerator(o.gitlab.TokenPath), "https://source.openeuler.sh/api/v4")
+	//if err != nil {
+	//	logrus.WithError(err).Fatal("Invalid client")
+	//}
 
-	r := newRobot(*c)
+	r := newRobot(c)
 
 	framework.Run(r, o.service)
 }

@@ -134,7 +134,7 @@ func (d *dispatcher) handleIssueCommentEvent(e *gitlab.IssueCommentEvent, l *log
 func (d *dispatcher) handleMergeCommentEvent(e *gitlab.MergeCommentEvent, l *logrus.Entry) {
 	defer d.wg.Done()
 
-	org, repo := gitlabclient.GetOrgRepo(e.Repository)
+	org, repo := gitlabclient.GetOrgRepo(e.Project.PathWithNamespace)
 	l = l.WithFields(logrus.Fields{
 		logFieldOrg:  org,
 		logFieldRepo: repo,
@@ -153,7 +153,7 @@ func (d *dispatcher) handleMergeCommentEvent(e *gitlab.MergeCommentEvent, l *log
 func (d *dispatcher) handleCommitCommentEvent(e *gitlab.CommitCommentEvent, l *logrus.Entry) {
 	defer d.wg.Done()
 
-	org, repo := gitlabclient.GetOrgRepo(e.Repository)
+	org, repo := gitlabclient.GetOrgRepo(e.Project.PathWithNamespace)
 	l = l.WithFields(logrus.Fields{
 		logFieldOrg:  org,
 		logFieldRepo: repo,
@@ -200,12 +200,12 @@ func parseRequest(w http.ResponseWriter, r *http.Request) (eventType string, uui
 	}
 
 	if eventType = r.Header.Get("X-Gitlab-Event"); eventType == "" {
-		resp(http.StatusBadRequest, "400 Bad Request: Missing X-GitHub-Event Header")
+		resp(http.StatusBadRequest, "400 Bad Request: Missing X-Gitlab-Event Header")
 		return
 	}
 
-	if uuid = r.Header.Get("X-Gitlab-Delivery"); uuid == "" {
-		resp(http.StatusBadRequest, "400 Bad Request: Missing X-GitHub-Delivery Header")
+	if uuid = r.Header.Get("X-Gitlab-Event-UUID"); uuid == "" {
+		resp(http.StatusBadRequest, "400 Bad Request: Missing X-Gitlab-Event-UUID Header")
 		return
 	}
 
