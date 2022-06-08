@@ -1,0 +1,17 @@
+EVENT_TYPE_NOTE = "Note Hook"
+EVENT_TYPE_PUSH = "Push Hook"
+EVENT_TYPE_ISSUE = "Issue Hook"
+EVENT_TYPE_PR = "Merge Request Hook"
+# StatusOpen gitee issue or pr status is open
+StatusOpen = "open"
+# StatusClosed gitee issue or pr status is closed
+StatusClosed = "closed"
+StatusMerged = "merged"
+ActionOpen = "open"
+ActionClose = "close"
+PRActionMerge = "merge"
+PRActionUpdatedLabel = "update_label"
+PRActionChangedTargetBranch = "target_branch_changed"
+PRActionChangedSourceBranch = "source_branch_changed"
+PRActionLinkIssue = "update_link_issue"
+ActionAddLabel = "add_label"
