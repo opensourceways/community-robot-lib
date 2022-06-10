@@ -41,3 +41,7 @@ def parse_config(config_file):
         config_options = yaml.load(config_file, Loader=yaml.SafeLoader)
     return config_options
 
+
+if __name__ == '__main__':
+    data = {'a': 1, 'b': 2, 'c': ['1']}
+    dict_to_object()

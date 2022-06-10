@@ -1,6 +1,6 @@
 from handlers import Handlers
-from hook_event_helper import *
 from converter import *
+from models.hook_event_helper import *
 
 
 class Dispatcher(object):
@@ -28,14 +28,17 @@ class Dispatcher(object):
         else:
             pass
 
-    def handle_note_event(self, note_event):
+    def get_config(self):
         pass
 
-    def handle_pull_request_event(self, pull_request_event):
-        pass
+    def handle_note_event(self, note_event: NoteEvent):
+        self.handlers.noteEventHandler(note_event)
 
-    def handle_issue_event(self, issue_event):
-        pass
+    def handle_pull_request_event(self, pull_request_event: PullRequestEvent):
+        self.handlers.pullRequestHandler(pull_request_event)
 
-    def handle_push_event(self, push_event):
-        pass
+    def handle_issue_event(self, issue_event: IssueEvent):
+        self.handlers.issueHandler(issue_event)
+
+    def handle_push_event(self, push_event: PushEvent):
+        self.handlers.pushEventHandler(push_event)

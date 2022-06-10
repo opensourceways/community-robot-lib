@@ -11,7 +11,7 @@ def get_issue(note_payload: NotePayload):
     access_token = note_payload.access_token
     gitee_api = GiteeApi()
     result = gitee_api.get_v5_repos_owner_repo_issues_number_comments(owner=owner, repo=repo,
-                                                                      number=number, access_token=access_token)
+                                                                      number=number)
     print(result)
 
 
