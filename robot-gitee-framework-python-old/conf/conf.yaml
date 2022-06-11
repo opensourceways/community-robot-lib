@@ -1,0 +1,13 @@
+port: 5000
+ip: 0.0.0.0
+debug: False
+route: /gitee-hook
+access_token: 029c5b544584f7dd17645e62596d9bfd
+allowed_hooks:
+  - Note Hook
+  - Push Hook
+  - Merge Request Hook
+  - Issue Hook
+allowed_repos:
+  - william_wong/*
+  - william_wong/openEuler
