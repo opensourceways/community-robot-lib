@@ -12,13 +12,6 @@ type client struct {
 	ac *gitlab.Client
 }
 
-//func NewGitlabClient(getToken func() []byte, host string) (*gitlab.Client, error) {
-//	tc := string(getToken())
-//	opts := gitlab.WithBaseURL(host)
-//
-//	return gitlab.NewOAuthClient(tc, opts)
-//}
-
 func NewGitlabClient(getToken func() []byte, host string) Client {
 	tc := string(getToken())
 	opts := gitlab.WithBaseURL(host)
@@ -29,15 +22,6 @@ func NewGitlabClient(getToken func() []byte, host string) Client {
 	}
 	return &client{ac: c}
 }
-
-//func NewGitlabClient(token, hostURL string) (*gitlab.Client, error) {
-//	//ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(getToken())})
-//	//tc := oauth2.NewClient(context.Background(), ts)
-//	tc := token
-//	opts := gitlab.WithBaseURL(hostURL)
-//
-//	return gitlab.NewClient(tc, opts)
-//}
 
 func (cli *client) GetMergeRequest(pid interface{}, mrID int) (gitlab.MergeRequest, error) {
 	opts := &gitlab.GetMergeRequestsOptions{}
