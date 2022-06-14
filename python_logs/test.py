@@ -1,7 +1,10 @@
-from log_utils import LOG
+import logging
+
+from python_logs.logging_demo import LogUtils
 
 if __name__ == '__main__':
-    LOG.info('hello')
-    LOG.warning('hello')
-    LOG.error('hello')
-    LOG.debug('hello')
+    format_str = '[%(asctime)s]-[%(levelname)s]-[%(filename)s:%(lineno)s]%(message)s'
+    logger = LogUtils('logger', logging.WARN, log_format=format_str)
+
+    logger.info('test')
+    logger.warning('test')
