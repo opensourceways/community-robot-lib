@@ -14,7 +14,6 @@ VERSION = "1.0.0"
 
 REQUIRES = [
     "gitee>=1.0.0",
-    "dacite==1.6.0",
 ]
 
 setup(
