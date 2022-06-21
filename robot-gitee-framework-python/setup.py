@@ -13,7 +13,8 @@ VERSION = "1.0.0"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
-    "gitee>=1.0.0"
+    "gitee>=1.0.0",
+    "dacite==1.6.0",
 ]
 
 setup(
