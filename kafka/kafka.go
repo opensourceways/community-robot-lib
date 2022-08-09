@@ -17,18 +17,24 @@ type kfkMQ struct {
 	opts           mq.Options
 	producer       sarama.SyncProducer
 	consumers      []sarama.Client
-	consumerGroups [] sarama.ConsumerGroup
+	consumerGroups []sarama.ConsumerGroup
 	mutex          sync.RWMutex
 	connected      bool
 	log            *logrus.Entry
+	wg             sync.WaitGroup
 }
 
 func (kMQ *kfkMQ) Init(opts ...mq.Option) error {
-	kMQ.mutex.RLock()
-	if kMQ.connected {
-		return fmt.Errorf("mq is connected can't init")
+	if kMQ.isConnected() {
+		return fmt.Errorf("mq is connected and can't do init")
 	}
-	kMQ.mutex.RUnlock()
+
+	kMQ.mutex.Lock()
+	defer kMQ.mutex.Unlock()
+
+	if kMQ.connected {
+		return nil
+	}
 
 	for _, o := range opts {
 		o(&kMQ.opts)
@@ -51,6 +57,14 @@ func (kMQ *kfkMQ) Init(opts ...mq.Option) error {
 	return nil
 }
 
+func (kMQ *kfkMQ) isConnected() (b bool) {
+	kMQ.mutex.RLock()
+	b = kMQ.connected
+	kMQ.mutex.RUnlock()
+
+	return
+}
+
 func (kMQ *kfkMQ) Options() mq.Options {
 	return kMQ.opts
 }
@@ -64,39 +78,43 @@ func (kMQ *kfkMQ) Address() string {
 }
 
 func (kMQ *kfkMQ) Connect() error {
+	if kMQ.isConnected() {
+		return nil
+	}
+
+	kMQ.mutex.Lock()
+	defer kMQ.mutex.Unlock()
+
 	if kMQ.connected {
 		return nil
 	}
-
-	kMQ.mutex.RLock()
-	if kMQ.producer != nil {
-		kMQ.mutex.RUnlock()
-
-		return nil
-	}
-	kMQ.mutex.RUnlock()
 
 	producer, err := sarama.NewSyncProducer(kMQ.opts.Addresses, kMQ.clusterConfig())
 	if err != nil {
 		return err
 	}
 
-	kMQ.mutex.Lock()
 	kMQ.producer = producer
 	kMQ.connected = true
-	kMQ.mutex.Unlock()
 
 	return nil
 }
 
 func (kMQ *kfkMQ) Disconnect() error {
+	if !kMQ.isConnected() {
+		return nil
+	}
+
 	kMQ.mutex.Lock()
 	defer kMQ.mutex.Unlock()
 
-	mErr := utils.MultiError{}
-	if kMQ.connected {
-		mErr.AddError(kMQ.producer.Close())
+	if !kMQ.connected {
+		return nil
 	}
+
+	mErr := utils.MultiError{}
+
+	mErr.AddError(kMQ.producer.Close())
 
 	for _, g := range kMQ.consumerGroups {
 		mErr.AddError(g.Close())
@@ -109,6 +127,7 @@ func (kMQ *kfkMQ) Disconnect() error {
 	}
 
 	kMQ.connected = false
+	kMQ.wg.Wait()
 
 	return mErr.Err()
 }
@@ -143,6 +162,7 @@ func (kMQ *kfkMQ) Subscribe(topics string, h mq.Handler, opts ...mq.SubscribeOpt
 	for _, o := range opts {
 		o(&opt)
 	}
+
 	c, err := kMQ.saramaClusterClient()
 	if err != nil {
 		return nil, err
@@ -160,27 +180,34 @@ func (kMQ *kfkMQ) Subscribe(topics string, h mq.Handler, opts ...mq.SubscribeOpt
 		ready:   make(chan bool),
 	}
 
+	kMQ.wg.Add(1)
+
 	go func() {
+		defer kMQ.wg.Done()
+
+		ctx := kMQ.opts.Context
+
 		for {
 			select {
 			case err := <-g.Errors():
 				if err != nil {
 					kMQ.log.Errorf("consumer error: %v", err)
 				}
+
+			case <-ctx.Done():
+				kMQ.log.Errorf("consumer error: %v", ctx.Err())
+				return
+
 			default:
-				err := g.Consume(kMQ.opts.Context, []string{topics}, gc)
+				err = g.Consume(ctx, []string{topics}, gc)
 				switch err {
-				case sarama.ErrClosedConsumerGroup:
-					return
 				case nil:
 					continue
+				case sarama.ErrClosedConsumerGroup:
+					return
 				default:
 					kMQ.log.Error(err)
 				}
-			}
-
-			if kMQ.opts.Context.Err() != nil {
-				return
 			}
 		}
 	}()
@@ -227,145 +254,10 @@ func (kMQ *kfkMQ) saramaClusterClient() (sarama.Client, error) {
 	}
 
 	kMQ.mutex.Lock()
-	defer kMQ.mutex.Unlock()
 	kMQ.consumers = append(kMQ.consumers, cs)
+	kMQ.mutex.Unlock()
 
 	return cs, nil
-}
-
-// groupConsumer represents a Sarama consumer group consumer
-type groupConsumer struct {
-	handler mq.Handler
-	subOpts mq.SubscribeOptions
-	kOpts   mq.Options
-	sess    sarama.ConsumerGroupSession
-
-	ready chan bool
-	once  sync.Once
-}
-
-// Setup is run at the beginning of a new session, before ConsumeClaim
-func (gc *groupConsumer) Setup(sarama.ConsumerGroupSession) error {
-	gc.once.Do(func() {
-		close(gc.ready)
-	})
-
-	return nil
-}
-
-// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (gc *groupConsumer) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-// ConsumeClaim must start a groupConsumer loop of ConsumerGroupClaim's Messages().
-func (gc *groupConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		var m mq.Message
-
-		ke := &kEvent{km: msg, m: &m, sess: session}
-		eHandler := gc.kOpts.ErrorHandler
-
-		if err := gc.kOpts.Codec.Unmarshal(msg.Value, &m); err != nil {
-			ke.err = err
-			ke.m.Body = msg.Value
-
-			if eHandler == nil {
-				gc.kOpts.Log.Errorf("unmarshal kafka msg fail with error : %v", err)
-
-				continue
-			}
-
-			if err := eHandler(ke); err != nil {
-				gc.kOpts.Log.Error(err)
-			}
-		}
-
-		if gc.handler == nil {
-			gc.handler = func(event mq.Event) error {
-				return fmt.Errorf("msg handler func is nil")
-			}
-		}
-
-		if err := gc.handler(ke); err != nil {
-			ke.err = err
-
-			if eHandler == nil {
-				gc.kOpts.Log.Errorf("subscriber error: %v", err)
-
-				continue
-			}
-
-			if err := eHandler(ke); err != nil {
-				gc.kOpts.Log.Error(err)
-			}
-		}
-
-		if gc.subOpts.AutoAck {
-			_ = ke.Ack()
-		}
-
-	}
-
-	return nil
-}
-
-type kEvent struct {
-	err error
-	km  *sarama.ConsumerMessage
-	m   *mq.Message
-
-	sess sarama.ConsumerGroupSession
-}
-
-func (ke *kEvent) Topic() string {
-	if ke.km != nil {
-		return ke.km.Topic
-	}
-
-	return ""
-}
-
-func (ke *kEvent) Message() *mq.Message {
-	return ke.m
-}
-
-func (ke *kEvent) Ack() error {
-	ke.sess.MarkMessage(ke.km, "")
-
-	return nil
-}
-
-func (ke *kEvent) Error() error {
-	return ke.err
-}
-
-func (ke *kEvent) Extra() map[string]interface{} {
-	em := make(map[string]interface{})
-	em["offset"] = ke.km.Offset
-	em["partition"] = ke.km.Partition
-	em["time"] = ke.km.Timestamp
-	em["block_time"] = ke.km.BlockTimestamp
-
-	return em
-}
-
-type subscriber struct {
-	cg   sarama.ConsumerGroup
-	t    string
-	opts mq.SubscribeOptions
-}
-
-func (s *subscriber) Options() mq.SubscribeOptions {
-	return s.opts
-}
-
-func (s *subscriber) Topic() string {
-	return s.t
-}
-
-func (s *subscriber) Unsubscribe() error {
-	return s.cg.Close()
 }
 
 func NewMQ(opts ...mq.Option) mq.MQ {
