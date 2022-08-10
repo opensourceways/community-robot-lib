@@ -10,18 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/community-robot-lib/mq"
-	"github.com/opensourceways/community-robot-lib/utils"
 )
 
 type kfkMQ struct {
-	opts           mq.Options
-	producer       sarama.SyncProducer
-	consumers      []sarama.Client
-	consumerGroups []sarama.ConsumerGroup
-	mutex          sync.RWMutex
-	connected      bool
-	log            *logrus.Entry
-	wg             sync.WaitGroup
+	opts     mq.Options
+	producer sarama.SyncProducer
+
+	mutex     sync.RWMutex
+	connected bool
 }
 
 func (kMQ *kfkMQ) Init(opts ...mq.Option) error {
@@ -39,8 +35,6 @@ func (kMQ *kfkMQ) Init(opts ...mq.Option) error {
 	for _, o := range opts {
 		o(&kMQ.opts)
 	}
-
-	kMQ.log = kMQ.opts.Log
 
 	if kMQ.opts.Addresses == nil {
 		kMQ.opts.Addresses = []string{"127.0.0.1:9092"}
@@ -112,24 +106,9 @@ func (kMQ *kfkMQ) Disconnect() error {
 		return nil
 	}
 
-	mErr := utils.MultiError{}
-
-	mErr.AddError(kMQ.producer.Close())
-
-	for _, g := range kMQ.consumerGroups {
-		mErr.AddError(g.Close())
-	}
-
-	for _, c := range kMQ.consumers {
-		if !c.Closed() {
-			mErr.AddError(c.Close())
-		}
-	}
-
 	kMQ.connected = false
-	kMQ.wg.Wait()
 
-	return mErr.Err()
+	return kMQ.producer.Close()
 }
 
 // Publish a message to a topic in the kafka cluster.
@@ -170,55 +149,21 @@ func (kMQ *kfkMQ) Subscribe(topics string, h mq.Handler, opts ...mq.SubscribeOpt
 
 	g, err := sarama.NewConsumerGroupFromClient(opt.Queue, c)
 	if err != nil {
+		c.Close()
+
 		return nil, err
 	}
 
-	gc := &groupConsumer{
+	gc := groupConsumer{
 		handler: h,
 		subOpts: opt,
 		kOpts:   kMQ.opts,
-		ready:   make(chan bool),
 	}
 
-	kMQ.wg.Add(1)
+	s := newSubscriber(topics, c, g, gc)
+	s.start()
 
-	go func() {
-		defer kMQ.wg.Done()
-
-		ctx := kMQ.opts.Context
-
-		for {
-			select {
-			case err := <-g.Errors():
-				if err != nil {
-					kMQ.log.Errorf("consumer error: %v", err)
-				}
-
-			case <-ctx.Done():
-				kMQ.log.Errorf("consumer error: %v", ctx.Err())
-				return
-
-			default:
-				err = g.Consume(ctx, []string{topics}, gc)
-				switch err {
-				case nil:
-					continue
-				case sarama.ErrClosedConsumerGroup:
-					return
-				default:
-					kMQ.log.Error(err)
-				}
-			}
-		}
-	}()
-
-	<-gc.ready
-
-	kMQ.mutex.Lock()
-	kMQ.consumerGroups = append(kMQ.consumerGroups, g)
-	kMQ.mutex.Unlock()
-
-	return &subscriber{cg: g, t: topics, opts: opt}, nil
+	return s, nil
 }
 
 func (kMQ *kfkMQ) String() string {
@@ -248,16 +193,7 @@ func (kMQ *kfkMQ) clusterConfig() *sarama.Config {
 }
 
 func (kMQ *kfkMQ) saramaClusterClient() (sarama.Client, error) {
-	cs, err := sarama.NewClient(kMQ.opts.Addresses, kMQ.clusterConfig())
-	if err != nil {
-		return nil, err
-	}
-
-	kMQ.mutex.Lock()
-	kMQ.consumers = append(kMQ.consumers, cs)
-	kMQ.mutex.Unlock()
-
-	return cs, nil
+	return sarama.NewClient(kMQ.opts.Addresses, kMQ.clusterConfig())
 }
 
 func NewMQ(opts ...mq.Option) mq.MQ {

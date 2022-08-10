@@ -36,28 +36,15 @@ func (e *event) Error() error {
 }
 
 func (e *event) Extra() map[string]interface{} {
-	return map[string]interface{}{
-		"time":       e.km.Timestamp,
-		"offset":     e.km.Offset,
-		"partition":  e.km.Partition,
-		"block_time": e.km.BlockTimestamp,
+	km := e.km
+	if km == nil {
+		return nil
 	}
-}
 
-type subscriber struct {
-	t    string
-	cg   sarama.ConsumerGroup
-	opts mq.SubscribeOptions
-}
-
-func (s *subscriber) Options() mq.SubscribeOptions {
-	return s.opts
-}
-
-func (s *subscriber) Topic() string {
-	return s.t
-}
-
-func (s *subscriber) Unsubscribe() error {
-	return s.cg.Close()
+	return map[string]interface{}{
+		"time":       km.Timestamp,
+		"offset":     km.Offset,
+		"partition":  km.Partition,
+		"block_time": km.BlockTimestamp,
+	}
 }
