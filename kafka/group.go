@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -106,10 +107,11 @@ type subscriber struct {
 	t  string
 	gc groupConsumer
 
-	once  sync.Once
-	ready chan struct{}
-	stop  chan struct{}
-	done  chan struct{}
+	once   sync.Once
+	ready  chan struct{}
+	stop   chan struct{}
+	done   chan struct{}
+	cancel context.CancelFunc
 }
 
 func newSubscriber(
@@ -146,8 +148,7 @@ func (s *subscriber) Unsubscribe() error {
 	mErr := utils.MultiError{}
 
 	s.once.Do(func() {
-		close(s.stop)
-
+		s.cancel()
 		// wait
 		<-s.done
 
@@ -161,33 +162,35 @@ func (s *subscriber) Unsubscribe() error {
 
 func (s *subscriber) start() {
 	log := s.gc.kOpts.Log
-	ctx := s.gc.subOpts.Context
+	ctx, cancel := context.WithCancel(s.gc.subOpts.Context)
+	s.cancel = cancel
 	topic := []string{s.t}
+
+	go func() {
+		for err := range s.cg.Errors() {
+			if err != nil {
+				log.Errorf("consumer error: %v", err)
+			}
+		}
+	}()
 
 	go func() {
 		defer close(s.done)
 
 		for {
-			select {
-			case err := <-s.cg.Errors():
-				if err != nil {
-					log.Errorf("consumer error: %v", err)
-				}
-
-			case <-s.stop:
-				log.Errorf("consumer stopped")
-				return
-
-			default:
-				err := s.cg.Consume(ctx, topic, &s.gc)
-				switch err {
-				case nil:
-					continue
-				case sarama.ErrClosedConsumerGroup:
+			// `Consume` should be called inside an infinite loop, when a
+			// server-side rebalance happens, the consumer session will need to be
+			// recreated to get the new claims
+			if err := s.cg.Consume(ctx, topic, &s.gc); err != nil {
+				if err == sarama.ErrClosedConsumerGroup {
 					return
-				default:
-					log.Error(err)
 				}
+				log.Errorf("\"Error from consumer: %v\", err")
+			}
+
+			// check if context was cancelled, signaling that the consumer should stop
+			if ctx.Err() != nil {
+				return
 			}
 		}
 	}()
