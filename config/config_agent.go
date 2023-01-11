@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sync"
 	"time"
 
@@ -40,14 +41,14 @@ func (ca *ConfigAgent) load(path string) error {
 		return err
 	}
 
-	v := fmt.Sprintf("%x", md5.Sum(b))
-
-	if ca.md5Sum == v {
+	content := []byte(os.ExpandEnv(string(b)))
+	md5Sum := fmt.Sprintf("%x", md5.Sum(content))
+	if ca.md5Sum == md5Sum {
 		return nil
 	}
 
 	c := ca.b()
-	if err := yaml.Unmarshal(b, c); err != nil {
+	if err := yaml.Unmarshal(content, c); err != nil {
 		return err
 	}
 
@@ -58,8 +59,8 @@ func (ca *ConfigAgent) load(path string) error {
 	}
 
 	ca.mut.Lock()
-	ca.md5Sum = v
 	ca.c = c
+	ca.md5Sum = md5Sum
 	ca.mut.Unlock()
 
 	return nil
