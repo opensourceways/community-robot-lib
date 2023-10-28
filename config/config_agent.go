@@ -31,8 +31,8 @@ type ConfigAgent struct {
 	t      utils.Timer
 }
 
-func NewConfigAgent(b NewConfig) ConfigAgent {
-	return ConfigAgent{b: b, t: utils.NewTimer()}
+func NewConfigAgent(b NewConfig) *ConfigAgent {
+	return &ConfigAgent{b: b, t: utils.NewTimer()}
 }
 
 func (ca *ConfigAgent) load(path string) error {
