@@ -685,6 +685,19 @@ func (c *client) PatchFile(owner, repo, path, branch, content, sha, message stri
 	return nil
 }
 
+func (c *client) HasLinkPullRequests(owner, repo, number string) (bool, error) {
+	opt := sdk.GetV5ReposOwnerIssuesNumberPullRequestsOpts{}
+	pullRequests, _, err := c.ac.IssuesApi.GetV5ReposOwnerIssuesNumberPullRequests(context.Background(), owner, repo, number, &opt)
+	if err != nil {
+		return false, formatErr(err, "get link pull requests of issue")
+	}
+	if len(pullRequests) == 0 {
+		return false, err
+	} else {
+		return true, err
+	}
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
