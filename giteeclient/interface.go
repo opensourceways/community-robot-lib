@@ -64,6 +64,7 @@ type Client interface {
 	UpdateIssue(owner, number string, param sdk.IssueUpdateParam) (sdk.Issue, error)
 	GetIssue(org, repo, number string) (sdk.Issue, error)
 	HasLinkPullRequests(owner, repo, number string) (bool, error)
+	GetIssueOperateLogs(owner, repo, number string) ([]sdk.OperateLog, error)
 
 	AddProjectLabels(org, repo string, label []string) error
 	UpdateProjectLabels(org, repo string, label []string) error

@@ -698,6 +698,18 @@ func (c *client) HasLinkPullRequests(owner, repo, number string) (bool, error) {
 	}
 }
 
+func (c *client) GetIssueOperateLogs(owner, repo, number string) ([]sdk.OperateLog, error) {
+	opt := sdk.GetV5ReposOwnerIssuesNumberOperateLogsOpts{
+		Repo: optional.NewString(repo),
+	}
+	logs, _, err := c.ac.IssuesApi.GetV5ReposOwnerIssuesNumberOperateLogs(context.Background(), owner, number, &opt)
+	if err != nil {
+		return nil, err
+	} else {
+		return logs, nil
+	}
+}
+
 func formatErr(err error, doWhat string) error {
 	if err == nil {
 		return err
